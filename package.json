@@ -1,6 +1,6 @@
 {
   "name": "wag",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -9,5 +9,14 @@
   },
   "peerDependencies": {
     "typescript": "^5"
-  }
+  },
+  "dependencies": {
+    "baileys": "^7.0.0-rc.2",
+    "p-queue": "^8.1.1",
+    "pino-pretty": "^13.1.1"
+  },
+  "trustedDependencies": [
+    "baileys",
+    "protobufjs"
+  ]
 }
