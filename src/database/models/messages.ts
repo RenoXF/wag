@@ -124,6 +124,18 @@ export abstract class MessageTable {
     return reviveBuffer(results[0].data) as WAMessage;
   }
 
+  public static async getAll(device_id: string, fromMe: boolean = true, realMessage: boolean = true, limit = 10, page = 1) {
+    const data = await sql`SELECT id, device_id, type, text, created_at FROM messages
+      WHERE device_id = ${device_id}
+      AND from_me = ${fromMe}
+      AND is_real_message = ${realMessage}
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${(page - 1) * limit};
+    `;
+
+    return data;
+  }
+
   public static async clear(deviceId: string) {
     await sql`DELETE FROM messages WHERE device_id = ${deviceId}`;
   }
