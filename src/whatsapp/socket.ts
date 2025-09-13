@@ -4,15 +4,15 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   isJidBot,
   isJidMetaAI,
-  isRealMessage,
+  isPnUser,
+  jidDecode,
+  jidNormalizedUser,
   makeCacheableSignalKeyStore,
-  normalizeMessageContent,
-  updateMessageWithReaction,
-  updateMessageWithReceipt,
+  type AnyMessageContent,
   type CacheStore,
   type GroupParticipant,
+  type MiscMessageGenerationOptions,
   type WAConnectionState,
-  type WAMessage,
   type WASocket,
 } from 'baileys';
 import { EventEmitter } from 'node:events';
@@ -22,6 +22,8 @@ import { useStorage } from './storage';
 import { Boom } from '@hapi/boom';
 import PQueue from 'p-queue';
 import { ContactTable, GroupTable, MessageTable } from '../database/models';
+import { sleep } from 'bun';
+import { randomInt } from 'node:crypto';
 
 export type WhatsappAuth = {
   via: 'qr_code' | 'pair_code';
@@ -55,11 +57,40 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
   protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 });
   protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 });
   protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 30 });
-  protected _messageSendQueue = new PQueue({ concurrency: 1, timeout: 30 });
+  protected _messageSendQueue = new PQueue({ concurrency: 1 });
 
   constructor(public readonly deviceId: string) {
     super();
     this.logger = P({ level: 'error' }).child({ deviceId });
+  }
+
+  public get user() {
+    if (this._socket?.user) {
+      const phoneNumber = isPnUser(this._socket.user.id)
+        ? jidDecode(jidNormalizedUser(this._socket.user.id))?.user
+        : null;
+      this._socket.user.name;
+      return {
+        id: phoneNumber,
+        lid: this._socket.user.lid ?? null,
+        phoneNumber: this._socket.user.phoneNumber ?? null,
+        name: this._socket.user.name ?? null,
+        notify: this._socket.user.notify ?? null,
+        verifiedName: this._socket.user.verifiedName ?? null,
+        imgUrl: this._socket.user.imgUrl ?? null,
+        status: this._socket.user.status ?? null,
+      };
+    }
+
+    return null;
+  }
+
+  public get state() {
+    return this._state;
+  }
+
+  public get auth() {
+    return this._auth;
   }
 
   public async connect() {
@@ -128,8 +159,8 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
         this._auth = null;
         this._socket = sock;
         setTimeout(() => {
-          this._refreshGroupMetadata();
-        }, 1000)
+          this.refreshGroupMetadata();
+        }, 1000);
         this.emit('ready', sock);
       }
 
@@ -186,7 +217,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
           return;
         }
 
-        console.log(`Connection closed due to ${lastDisconnect?.error}`)
+        console.log(`Connection closed due to ${lastDisconnect?.error}`);
 
         this._cleanup(false, statusMsg);
       }
@@ -214,7 +245,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
       }
     });
 
-    sock.ev.on('group-participants.update', ({id, participants, action}) => {
+    sock.ev.on('group-participants.update', ({ id, participants, action }) => {
       const contacts: GroupParticipant[] = participants.map((p) => ({ id: p }));
 
       if (action === 'add') {
@@ -230,16 +261,19 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
       }
     });
 
-    sock.ev.on('messages.upsert', async ({messages, type, requestId}) => {
+    sock.ev.on('messages.upsert', async ({ messages, type, requestId }) => {
       for (const message of messages) {
         const id = message.key.id;
         const remoteJid = message.key.remoteJid;
 
         if (!id || !remoteJid) continue;
 
-        this._messageSaveQueue.add(() => {
-          return MessageTable.upsert(id, remoteJid, this.deviceId, message);
-        }, { id: id });
+        this._messageSaveQueue.add(
+          () => {
+            return MessageTable.upsert(id, remoteJid, this.deviceId, message);
+          },
+          { id: id }
+        );
       }
     });
 
@@ -253,7 +287,8 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
         if (!message) continue;
 
         this._messageSaveQueue.add(
-          () =>  MessageTable.updateMessage(id, remoteJid, this.deviceId, message),
+          () =>
+            MessageTable.updateMessage(id, remoteJid, this.deviceId, message),
           { id }
         );
       }
@@ -269,20 +304,21 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
         if (!reaction) continue;
 
         this._messageSaveQueue.add(
-          () =>  MessageTable.addReactions(id, remoteJid, this.deviceId, reaction),
+          () =>
+            MessageTable.addReactions(id, remoteJid, this.deviceId, reaction),
           { id }
         );
       }
-    })
+    });
 
-    sock.ev.on('messaging-history.set', ({chats, contacts, messages}) => {
+    sock.ev.on('messaging-history.set', ({ chats, contacts, messages }) => {
       for (const contact of contacts) {
         console.log('Saving contact from history', contact.id);
         const id = contact.id;
         if (!id) continue;
 
         this._contactsQueue.add(
-          () =>  ContactTable.upsert(this.deviceId, contact),
+          () => ContactTable.upsert(this.deviceId, contact),
           { id }
         );
       }
@@ -293,11 +329,14 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
         if (!id || !remoteJid) continue;
 
-        this._messageSaveQueue.add(() => {
-          return MessageTable.upsert(id, remoteJid, this.deviceId, message);
-        }, { id: id });
+        this._messageSaveQueue.add(
+          () => {
+            return MessageTable.upsert(id, remoteJid, this.deviceId, message);
+          },
+          { id: id }
+        );
       }
-    })
+    });
 
     sock.ev.on('contacts.update', (contacts) => {
       for (const contact of contacts) {
@@ -305,7 +344,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
         if (!id) continue;
 
         this._contactsQueue.add(
-          () =>  ContactTable.update(this.deviceId, contact),
+          () => ContactTable.update(this.deviceId, contact),
           { id: id }
         );
       }
@@ -314,7 +353,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
     sock.ev.on('contacts.upsert', (contacts) => {
       for (const contact of contacts) {
         this._contactsQueue.add(
-          () =>  ContactTable.upsert(this.deviceId, contact),
+          () => ContactTable.upsert(this.deviceId, contact),
           { id: contact.id }
         );
       }
@@ -337,11 +376,65 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
     }
   }
 
-  private async _refreshGroupMetadata() {
+  public async sendMessage(
+    jid: string,
+    content: AnyMessageContent,
+    options?: MiscMessageGenerationOptions
+  ) {
+    const socket = this._socket;
+    if (!socket) {
+      return false;
+    }
+
+    const id = Bun.hash.rapidhash(jid + JSON.stringify(options ?? null)).toString();
+
+    this._messageSendQueue.add(
+      async () => {
+        try {
+          await socket.presenceSubscribe(jid);
+          await socket.sendPresenceUpdate('available', jid);
+
+          await sleep(1000 * randomInt(1, 3));
+
+          const text = (content as any).caption ?? (content as any).text ?? '';
+          const typingSpeed = randomInt(25, 30);
+          const typingDurationSec = Math.max(
+            1,
+            Math.ceil(text.length / typingSpeed)
+          );
+          const intervalSec = 2;
+          const iterations = Math.ceil(typingDurationSec / intervalSec);
+
+          for (let i = 0; i < iterations; i++) {
+            await socket.sendPresenceUpdate('composing', jid);
+            await Bun.sleep(randomInt(3, 8) * 100);
+          }
+
+          await socket.sendPresenceUpdate('available', jid);
+          const res = await socket.sendMessage(jid, content, options);
+
+          if (res) {
+            return Promise.resolve(res);
+          }
+
+          throw new Error('Message sending returned null result');
+        } catch (error) {
+          return Promise.reject(`Failed to send message: ${error}`);
+        }
+      },
+      { id: id }
+    );
+
+    return true;
+  }
+
+  public async refreshGroupMetadata() {
     if (!this._socket) return false;
 
     try {
       await this._socket.groupFetchAllParticipating();
+
+      return true;
     } catch (err) {
       console.warn('Failed to fetch group metadata', err);
       this.emit(
