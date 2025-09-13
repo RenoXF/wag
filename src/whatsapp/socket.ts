@@ -134,8 +134,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
       }
 
       if (connection === 'connecting') {
-        // connecting to whatsapp
-        this._auth = null;
+        this._socket = sock;
       }
 
       if (connection === 'close') {
@@ -187,10 +186,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
           return;
         }
 
-        sock.logger.info(
-          {},
-          `Connection closed due to ${lastDisconnect?.error}`
-        );
+        console.log(`Connection closed due to ${lastDisconnect?.error}`)
 
         this._cleanup(false, statusMsg);
       }
@@ -325,6 +321,22 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
     });
   }
 
+  public async disconnect() {
+    if (this._socket) {
+      this._socket.end(new Error('Connection closed by client'));
+    } else {
+      this._cleanup(false, 'Connection closed by client');
+    }
+  }
+
+  public async logout() {
+    if (this._socket) {
+      await this._socket.logout();
+    } else {
+      this._cleanup(false, 'Connection closed by client');
+    }
+  }
+
   private async _refreshGroupMetadata() {
     if (!this._socket) return false;
 
@@ -347,12 +359,13 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
   ) {
     if (this._socket) {
       this._socket.end(new Error('Connection closed by client'));
+    } else {
+      this.emit('state', 'close');
     }
     this._socket = null;
     this._state = 'close';
     this._auth = null;
 
-    // this.emit('state', 'close');
     this.emit('close', {
       reason: reason ?? 'Connection closed by client',
       isRestart,
