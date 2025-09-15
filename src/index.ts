@@ -10,7 +10,7 @@ const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 
 const main = async () => {
 	await runMigration();
-	server.listen({ port, hostname }, (app) => {
+	server.listen({ port, hostname, reusePort: false }, (app) => {
 		console.log(`Server running at http://${app.hostname}:${app.port}`);
 	});
 };
