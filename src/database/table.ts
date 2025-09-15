@@ -1,8 +1,8 @@
 import sql from './db';
 
 export const runMigration = async () => {
-  await sql.begin(async (tx) => {
-    await tx`CREATE TABLE IF NOT EXISTS "devices" (
+	await sql.begin(async (tx) => {
+		await tx`CREATE TABLE IF NOT EXISTS "devices" (
       "id" varchar(26) NOT NULL PRIMARY KEY,
       "name" text NOT NULL,
       "description" text,
@@ -16,7 +16,7 @@ export const runMigration = async () => {
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL
     );`;
 
-    await tx`CREATE TABLE IF NOT EXISTS "contacts" (
+		await tx`CREATE TABLE IF NOT EXISTS "contacts" (
       "id" text NOT NULL,
       "device_id" varchar(26) NOT NULL,
       "lid" text,
@@ -32,7 +32,7 @@ export const runMigration = async () => {
       CONSTRAINT "contacts_id_device_id_pkey" PRIMARY KEY ("id", "device_id")
     );`;
 
-    await tx`CREATE TABLE IF NOT EXISTS "sessions" (
+		await tx`CREATE TABLE IF NOT EXISTS "sessions" (
       "id" text NOT NULL,
       "device_id" varchar(26) NOT NULL,
       "data" jsonb NOT NULL,
@@ -42,7 +42,7 @@ export const runMigration = async () => {
       CONSTRAINT "sessions_id_device_id_pkey" PRIMARY KEY ("id", "device_id")
     );`;
 
-    await tx`CREATE TABLE IF NOT EXISTS "conversations" (
+		await tx`CREATE TABLE IF NOT EXISTS "conversations" (
       "id" text NOT NULL,
       "device_id" varchar(26) NOT NULL,
       "data" jsonb NOT NULL,
@@ -52,7 +52,7 @@ export const runMigration = async () => {
       CONSTRAINT "conversations_id_device_id_pkey" PRIMARY KEY ("id", "device_id")
     );`;
 
-    await tx`CREATE TABLE IF NOT EXISTS "groups" (
+		await tx`CREATE TABLE IF NOT EXISTS "groups" (
       "id" text NOT NULL,
       "device_id" varchar(26) NOT NULL,
       "data" jsonb NOT NULL,
@@ -62,7 +62,7 @@ export const runMigration = async () => {
       CONSTRAINT "groups_id_device_id_pkey" PRIMARY KEY ("id", "device_id")
     );`;
 
-    await tx`CREATE TABLE IF NOT EXISTS "messages" (
+		await tx`CREATE TABLE IF NOT EXISTS "messages" (
       "id" text NOT NULL,
       "remote_jid" text NOT NULL,
       "from_me" boolean NOT NULL,
@@ -78,7 +78,7 @@ export const runMigration = async () => {
 
       CONSTRAINT "messages_id_device_id_pkey" PRIMARY KEY ("id", "device_id")
     );`;
-  });
+	});
 
-  console.log('All tables created successfully');
+	console.log('All tables created successfully');
 };

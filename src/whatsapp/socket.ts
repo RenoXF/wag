@@ -1,492 +1,492 @@
-import makeWASocket, {
-  Browsers,
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  isJidBot,
-  isJidMetaAI,
-  isPnUser,
-  jidDecode,
-  jidNormalizedUser,
-  makeCacheableSignalKeyStore,
-  type AnyMessageContent,
-  type CacheStore,
-  type GroupParticipant,
-  type MiscMessageGenerationOptions,
-  type WAConnectionState,
-  type WASocket,
-} from 'baileys';
+import { randomInt } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import NodeCache from '@cacheable/node-cache';
-import P from 'pino';
-import { useStorage } from './storage';
-import { Boom } from '@hapi/boom';
-import PQueue from 'p-queue';
-import { ContactTable, GroupTable, MessageTable } from '../database/models';
+import type { Boom } from '@hapi/boom';
+import makeWASocket, {
+	type AnyMessageContent,
+	Browsers,
+	type CacheStore,
+	DisconnectReason,
+	fetchLatestBaileysVersion,
+	type GroupParticipant,
+	isJidBot,
+	isJidMetaAI,
+	isPnUser,
+	jidDecode,
+	jidNormalizedUser,
+	type MiscMessageGenerationOptions,
+	makeCacheableSignalKeyStore,
+	type WAConnectionState,
+	type WASocket,
+} from 'baileys';
 import { sleep } from 'bun';
-import { randomInt } from 'node:crypto';
+import PQueue from 'p-queue';
+import P from 'pino';
+import { ContactTable, GroupTable, MessageTable } from '../database/models';
+import { useStorage } from './storage';
 
 export type WhatsappAuth = {
-  via: 'qr_code' | 'pair_code';
-  data: string;
+	via: 'qr_code' | 'pair_code';
+	data: string;
 };
 
 export interface WhatsappEvent {
-  state: [WAConnectionState];
-  auth: [WhatsappAuth];
-  ready: [WASocket];
-  close: [{ reason: string; isRestart: boolean }];
-  error: [Error];
+	state: [WAConnectionState];
+	auth: [WhatsappAuth];
+	ready: [WASocket];
+	close: [{ reason: string; isRestart: boolean }];
+	error: [Error];
 }
 
 export class WaSocket extends EventEmitter<WhatsappEvent> {
-  protected logger: P.Logger;
-  protected _state: WAConnectionState = 'close';
-  protected _auth: WhatsappAuth | null = null;
-  protected _socket: WASocket | null = null;
-
-  protected _msgRetryCounterCache = new NodeCache({
-    stdTTL: 60 * 60, // 1 hour
-  }) as CacheStore;
-  protected _userDevicesCache = new NodeCache({
-    stdTTL: 60 * 60, // 1 hour
-  }) as CacheStore;
-  protected _placeholderResendCache = new NodeCache({
-    stdTTL: 60 * 60, // 1 hour
-  }) as CacheStore;
-
-  protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 });
-  protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 });
-  protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 30 });
-  protected _messageSendQueue = new PQueue({ concurrency: 1 });
-  protected _groupMetadataRefreshQueue = new PQueue({
-    concurrency: 1,
-    interval: 60_000,
-    intervalCap: 1,
-  });
-
-  constructor(public readonly deviceId: string) {
-    super();
-    this.logger = P({ level: 'error' }).child({ deviceId });
-  }
-
-  public get user() {
-    if (this._socket?.user) {
-      const phoneNumber = isPnUser(this._socket.user.id)
-        ? jidDecode(jidNormalizedUser(this._socket.user.id))?.user
-        : null;
-      this._socket.user.name;
-      return {
-        id: phoneNumber,
-        lid: this._socket.user.lid ?? null,
-        phoneNumber: this._socket.user.phoneNumber ?? null,
-        name: this._socket.user.name ?? null,
-        notify: this._socket.user.notify ?? null,
-        verifiedName: this._socket.user.verifiedName ?? null,
-        imgUrl: this._socket.user.imgUrl ?? null,
-        status: this._socket.user.status ?? null,
-      };
-    }
-
-    return null;
-  }
-
-  public get state() {
-    return this._state;
-  }
-
-  public get auth() {
-    return this._auth;
-  }
-
-  public async connect() {
-    if (this._socket) {
-      throw new Error('Socket is already connected');
-    }
-
-    const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
-    // fetch latest version of WA Web
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
-
-    const sock = makeWASocket({
-      version,
-      logger: this.logger,
-      browser: Browsers.ubuntu('Chrome'),
-      auth: {
-        creds: state.creds,
-        /** caching makes the store faster to send/recv messages */
-        keys: makeCacheableSignalKeyStore(state.keys, this.logger),
-      },
-      generateHighQualityLinkPreview: true,
-      markOnlineOnConnect: false,
-      msgRetryCounterCache: this._msgRetryCounterCache,
-      userDevicesCache: this._userDevicesCache,
-      placeholderResendCache: this._placeholderResendCache,
-      shouldIgnoreJid: (jid) => {
-        return isJidBot(jid) || isJidMetaAI(jid);
-      },
-      cachedGroupMetadata: async (jid) => {
-        const group = await GroupTable.get(jid, this.deviceId);
-        if (group) {
-          return group;
-        }
-      },
-      getMessage: async (key) => {
-        const id = key.id;
-        const remoteJid = key.remoteJid;
-
-        if (!id || !remoteJid) return undefined;
-        const msg = await MessageTable.get(id, remoteJid, this.deviceId);
-
-        if (msg?.message) {
-          return msg.message;
-        }
-      },
-    });
-
-    sock.ev.on('creds.update', saveCreds);
-
-    sock.ev.on('connection.update', (update) => {
-      const { connection, lastDisconnect, qr } = update;
-
-      if (qr) {
-        this._auth = { via: 'qr_code', data: qr };
-        this.emit('auth', this._auth);
-      }
-
-      if (connection) {
-        this._state = connection;
-        this.emit('state', connection);
-      }
-
-      if (connection === 'open') {
-        // we're connected
-        this._auth = null;
-        this._socket = sock;
-        setTimeout(() => {
-          this.refreshGroupMetadata();
-        }, 1000);
-        this.emit('ready', sock);
-      }
-
-      if (connection === 'connecting') {
-        this._socket = sock;
-      }
-
-      if (connection === 'close') {
-        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-        const statusMsg = (lastDisconnect?.error as Boom)?.message ?? '';
-
-        if (statusMsg.toLowerCase().includes('qr refs attempts ended')) {
-          this._cleanup(false, statusMsg, clearCreds);
-          return;
-        }
-
-        if (statusMsg.toLowerCase().includes('proxy connection timed out')) {
-          console.log('Proxy connection timed out');
-          this._cleanup(false, statusMsg, clearCreds);
-          return;
-        }
-
-        const restartedCodes = [
-          DisconnectReason.restartRequired,
-          DisconnectReason.connectionLost,
-          DisconnectReason.connectionClosed,
-        ];
-
-        const loggedOutCodes = [
-          DisconnectReason.unavailableService,
-          DisconnectReason.badSession,
-          DisconnectReason.loggedOut,
-          DisconnectReason.multideviceMismatch,
-          406, // Banned
-          402, // Temp banned
-          405, // Client too old
-        ];
-
-        if (restartedCodes.includes(statusCode)) {
-          console.log(
-            `Connection closed, restarting (${statusCode} - ${statusMsg})`
-          );
-          this._cleanup(true, statusMsg);
-          return this.connect().catch((err) => {
-            this.emit('error', err);
-          });
-        }
-
-        if (loggedOutCodes.includes(statusCode)) {
-          console.log(
-            `Connection closed, logged out (${statusCode} - ${statusMsg})`
-          );
-          this._cleanup(false, statusMsg, clearCreds);
-          return;
-        }
-
-        console.log(`Connection closed due to ${lastDisconnect?.error}`);
-
-        this._cleanup(false, statusMsg);
-      }
-    });
-
-    sock.ev.on('groups.upsert', (groups) => {
-      for (const group of groups) {
-        this._groupMetadataQueue.add(
-          () => GroupTable.upsert(group.id, this.deviceId, group),
-          { id: group.id }
-        );
-      }
-    });
-
-    sock.ev.on('groups.update', (groups) => {
-      for (const group of groups) {
-        const id = group.id;
-
-        if (!id) continue;
-
-        this._groupMetadataQueue.add(
-          () => GroupTable.upsert(id, this.deviceId, group),
-          { id: id }
-        );
-      }
-    });
-
-    sock.ev.on('group-participants.update', ({ id, participants, action }) => {
-      const contacts: GroupParticipant[] = participants.map((p) => ({ id: p }));
-
-      if (action === 'add') {
-        this._groupMetadataQueue.add(
-          () => GroupTable.addParticipants(id, this.deviceId, contacts),
-          { id }
-        );
-      } else if (action === 'remove') {
-        this._groupMetadataQueue.add(
-          () => GroupTable.removeParticipants(id, this.deviceId, participants),
-          { id }
-        );
-      }
-    });
-
-    sock.ev.on('messages.upsert', async ({ messages, type, requestId }) => {
-      for (const message of messages) {
-        const id = message.key.id;
-        const remoteJid = message.key.remoteJid;
-
-        if (!id || !remoteJid) continue;
-
-        this._messageSaveQueue.add(
-          () => {
-            return MessageTable.upsert(id, remoteJid, this.deviceId, message);
-          },
-          { id: id }
-        );
-      }
-    });
-
-    sock.ev.on('messages.update', (messages) => {
-      for (const data of messages) {
-        const id = data.key.id;
-        const remoteJid = data.key.remoteJid;
-
-        if (!id || !remoteJid) continue;
-        const message = data.update;
-        if (!message) continue;
-
-        this._messageSaveQueue.add(
-          () =>
-            MessageTable.updateMessage(id, remoteJid, this.deviceId, message),
-          { id }
-        );
-      }
-    });
-
-    sock.ev.on('messages.reaction', (reactions) => {
-      for (const data of reactions) {
-        const id = data.key.id;
-        const remoteJid = data.key.remoteJid;
-        const reaction = data.reaction;
-
-        if (!id || !remoteJid) continue;
-        if (!reaction) continue;
-
-        this._messageSaveQueue.add(
-          () =>
-            MessageTable.addReactions(id, remoteJid, this.deviceId, reaction),
-          { id }
-        );
-      }
-    });
-
-    sock.ev.on('messaging-history.set', ({ chats, contacts, messages }) => {
-      for (const contact of contacts) {
-        console.log('Saving contact from history', contact.id);
-        const id = contact.id;
-        if (!id) continue;
-
-        this._contactsQueue.add(
-          () => ContactTable.upsert(this.deviceId, contact),
-          { id }
-        );
-      }
-
-      for (const message of messages) {
-        const id = message.key.id;
-        const remoteJid = message.key.remoteJid;
-
-        if (!id || !remoteJid) continue;
-
-        this._messageSaveQueue.add(
-          () => {
-            return MessageTable.upsert(id, remoteJid, this.deviceId, message);
-          },
-          { id: id }
-        );
-      }
-    });
-
-    sock.ev.on('contacts.update', (contacts) => {
-      for (const contact of contacts) {
-        const id = contact.id;
-        if (!id) continue;
-
-        this._contactsQueue.add(
-          () => ContactTable.update(this.deviceId, contact),
-          { id: id }
-        );
-      }
-    });
-
-    sock.ev.on('contacts.upsert', (contacts) => {
-      for (const contact of contacts) {
-        this._contactsQueue.add(
-          () => ContactTable.upsert(this.deviceId, contact),
-          { id: contact.id }
-        );
-      }
-    });
-  }
-
-  public async disconnect() {
-    if (this._socket) {
-      this._socket.end(new Error('Connection closed by client'));
-    } else {
-      this._cleanup(false, 'Connection closed by client');
-    }
-  }
-
-  public async logout() {
-    if (this._socket) {
-      await this._socket.logout();
-    } else {
-      this._cleanup(false, 'Connection closed by client');
-    }
-  }
-
-  public async sendMessage(
-    jid: string,
-    content: AnyMessageContent,
-    options?: MiscMessageGenerationOptions
-  ) {
-    const socket = this._socket;
-    if (!socket) {
-      return false;
-    }
-
-    const id = Bun.hash
-      .rapidhash(jid + JSON.stringify(options ?? null))
-      .toString();
-
-    this._messageSendQueue.add(
-      async () => {
-        try {
-          await socket.presenceSubscribe(jid);
-          await socket.sendPresenceUpdate('available', jid);
-
-          await sleep(1000 * randomInt(1, 3));
-
-          const text = (content as any).caption ?? (content as any).text ?? '';
-          const typingSpeed = randomInt(25, 30);
-          const typingDurationSec = Math.max(
-            1,
-            Math.ceil(text.length / typingSpeed)
-          );
-          const intervalSec = 2;
-          const iterations = Math.ceil(typingDurationSec / intervalSec);
-
-          for (let i = 0; i < iterations; i++) {
-            await socket.sendPresenceUpdate('composing', jid);
-            await Bun.sleep(randomInt(3, 8) * 100);
-          }
-
-          await socket.sendPresenceUpdate('available', jid);
-          const res = await socket.sendMessage(jid, content, options);
-
-          if (res) {
-            return Promise.resolve(res);
-          }
-
-          throw new Error('Message sending returned null result');
-        } catch (error) {
-          return Promise.reject(`Failed to send message: ${error}`);
-        }
-      },
-      { id: id }
-    );
-
-    return true;
-  }
-
-  public async refreshGroupMetadata() {
-    if (!this._socket) return false;
-
-    this._groupMetadataRefreshQueue.add(async () => {
-      try {
-        await this._socket?.groupFetchAllParticipating();
-
-        return true;
-      } catch (err) {
-        console.warn('Failed to fetch group metadata', err);
-        this.emit(
-          'error',
-          new Error('Failed to fetch group metadata', { cause: err })
-        );
-        return false;
-      }
-    });
-
-    return true;
-  }
-
-  private _cleanup(
-    isRestart: boolean = false,
-    reason?: string,
-    callback?: () => void
-  ) {
-    if (this._socket) {
-      this._socket.end(new Error('Connection closed by client'));
-    } else {
-      this.emit('state', 'close');
-    }
-    this._socket = null;
-    this._state = 'close';
-    this._auth = null;
-
-    this.emit('close', {
-      reason: reason ?? 'Connection closed by client',
-      isRestart,
-    });
-
-    if (!isRestart) {
-      this._msgRetryCounterCache.flushAll();
-      this._userDevicesCache.flushAll();
-      this._placeholderResendCache.flushAll();
-      this._groupMetadataQueue.clear();
-      this._messageSaveQueue.clear();
-      this._messageSendQueue.clear();
-      this._contactsQueue.clear();
-    }
-
-    if (callback) {
-      callback();
-    }
-  }
+	protected logger: P.Logger;
+	protected _state: WAConnectionState = 'close';
+	protected _auth: WhatsappAuth | null = null;
+	protected _socket: WASocket | null = null;
+
+	protected _msgRetryCounterCache = new NodeCache({
+		stdTTL: 60 * 60, // 1 hour
+	}) as CacheStore;
+	protected _userDevicesCache = new NodeCache({
+		stdTTL: 60 * 60, // 1 hour
+	}) as CacheStore;
+	protected _placeholderResendCache = new NodeCache({
+		stdTTL: 60 * 60, // 1 hour
+	}) as CacheStore;
+
+	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 });
+	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 });
+	protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 30 });
+	protected _messageSendQueue = new PQueue({ concurrency: 1 });
+	protected _groupMetadataRefreshQueue = new PQueue({
+		concurrency: 1,
+		interval: 60_000,
+		intervalCap: 1,
+	});
+
+	constructor(public readonly deviceId: string) {
+		super();
+		this.logger = P({ level: 'error' }).child({ deviceId });
+	}
+
+	public get user() {
+		if (this._socket?.user) {
+			const phoneNumber = isPnUser(this._socket.user.id)
+				? jidDecode(jidNormalizedUser(this._socket.user.id))?.user
+				: null;
+			this._socket.user.name;
+			return {
+				id: phoneNumber,
+				lid: this._socket.user.lid ?? null,
+				phoneNumber: this._socket.user.phoneNumber ?? null,
+				name: this._socket.user.name ?? null,
+				notify: this._socket.user.notify ?? null,
+				verifiedName: this._socket.user.verifiedName ?? null,
+				imgUrl: this._socket.user.imgUrl ?? null,
+				status: this._socket.user.status ?? null,
+			};
+		}
+
+		return null;
+	}
+
+	public get state() {
+		return this._state;
+	}
+
+	public get auth() {
+		return this._auth;
+	}
+
+	public async connect() {
+		if (this._socket) {
+			throw new Error('Socket is already connected');
+		}
+
+		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
+		// fetch latest version of WA Web
+		const { version, isLatest } = await fetchLatestBaileysVersion();
+		console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+
+		const sock = makeWASocket({
+			version,
+			logger: this.logger,
+			browser: Browsers.ubuntu('Chrome'),
+			auth: {
+				creds: state.creds,
+				/** caching makes the store faster to send/recv messages */
+				keys: makeCacheableSignalKeyStore(state.keys, this.logger),
+			},
+			generateHighQualityLinkPreview: true,
+			markOnlineOnConnect: false,
+			msgRetryCounterCache: this._msgRetryCounterCache,
+			userDevicesCache: this._userDevicesCache,
+			placeholderResendCache: this._placeholderResendCache,
+			shouldIgnoreJid: (jid) => {
+				return isJidBot(jid) || isJidMetaAI(jid);
+			},
+			cachedGroupMetadata: async (jid) => {
+				const group = await GroupTable.get(jid, this.deviceId);
+				if (group) {
+					return group;
+				}
+			},
+			getMessage: async (key) => {
+				const id = key.id;
+				const remoteJid = key.remoteJid;
+
+				if (!id || !remoteJid) return undefined;
+				const msg = await MessageTable.get(id, remoteJid, this.deviceId);
+
+				if (msg?.message) {
+					return msg.message;
+				}
+			},
+		});
+
+		sock.ev.on('creds.update', saveCreds);
+
+		sock.ev.on('connection.update', (update) => {
+			const { connection, lastDisconnect, qr } = update;
+
+			if (qr) {
+				this._auth = { via: 'qr_code', data: qr };
+				this.emit('auth', this._auth);
+			}
+
+			if (connection) {
+				this._state = connection;
+				this.emit('state', connection);
+			}
+
+			if (connection === 'open') {
+				// we're connected
+				this._auth = null;
+				this._socket = sock;
+				setTimeout(() => {
+					this.refreshGroupMetadata();
+				}, 1000);
+				this.emit('ready', sock);
+			}
+
+			if (connection === 'connecting') {
+				this._socket = sock;
+			}
+
+			if (connection === 'close') {
+				const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+				const statusMsg = (lastDisconnect?.error as Boom)?.message ?? '';
+
+				if (statusMsg.toLowerCase().includes('qr refs attempts ended')) {
+					this._cleanup(false, statusMsg, clearCreds);
+					return;
+				}
+
+				if (statusMsg.toLowerCase().includes('proxy connection timed out')) {
+					console.log('Proxy connection timed out');
+					this._cleanup(false, statusMsg, clearCreds);
+					return;
+				}
+
+				const restartedCodes = [
+					DisconnectReason.restartRequired,
+					DisconnectReason.connectionLost,
+					DisconnectReason.connectionClosed,
+				];
+
+				const loggedOutCodes = [
+					DisconnectReason.unavailableService,
+					DisconnectReason.badSession,
+					DisconnectReason.loggedOut,
+					DisconnectReason.multideviceMismatch,
+					406, // Banned
+					402, // Temp banned
+					405, // Client too old
+				];
+
+				if (restartedCodes.includes(statusCode)) {
+					console.log(
+						`Connection closed, restarting (${statusCode} - ${statusMsg})`,
+					);
+					this._cleanup(true, statusMsg);
+					return this.connect().catch((err) => {
+						this.emit('error', err);
+					});
+				}
+
+				if (loggedOutCodes.includes(statusCode)) {
+					console.log(
+						`Connection closed, logged out (${statusCode} - ${statusMsg})`,
+					);
+					this._cleanup(false, statusMsg, clearCreds);
+					return;
+				}
+
+				console.log(`Connection closed due to ${lastDisconnect?.error}`);
+
+				this._cleanup(false, statusMsg);
+			}
+		});
+
+		sock.ev.on('groups.upsert', (groups) => {
+			for (const group of groups) {
+				this._groupMetadataQueue.add(
+					() => GroupTable.upsert(group.id, this.deviceId, group),
+					{ id: group.id },
+				);
+			}
+		});
+
+		sock.ev.on('groups.update', (groups) => {
+			for (const group of groups) {
+				const id = group.id;
+
+				if (!id) continue;
+
+				this._groupMetadataQueue.add(
+					() => GroupTable.upsert(id, this.deviceId, group),
+					{ id: id },
+				);
+			}
+		});
+
+		sock.ev.on('group-participants.update', ({ id, participants, action }) => {
+			const contacts: GroupParticipant[] = participants.map((p) => ({ id: p }));
+
+			if (action === 'add') {
+				this._groupMetadataQueue.add(
+					() => GroupTable.addParticipants(id, this.deviceId, contacts),
+					{ id },
+				);
+			} else if (action === 'remove') {
+				this._groupMetadataQueue.add(
+					() => GroupTable.removeParticipants(id, this.deviceId, participants),
+					{ id },
+				);
+			}
+		});
+
+		sock.ev.on('messages.upsert', async ({ messages }) => {
+			for (const message of messages) {
+				const id = message.key.id;
+				const remoteJid = message.key.remoteJid;
+
+				if (!id || !remoteJid) continue;
+
+				this._messageSaveQueue.add(
+					() => {
+						return MessageTable.upsert(id, remoteJid, this.deviceId, message);
+					},
+					{ id: id },
+				);
+			}
+		});
+
+		sock.ev.on('messages.update', (messages) => {
+			for (const data of messages) {
+				const id = data.key.id;
+				const remoteJid = data.key.remoteJid;
+
+				if (!id || !remoteJid) continue;
+				const message = data.update;
+				if (!message) continue;
+
+				this._messageSaveQueue.add(
+					() =>
+						MessageTable.updateMessage(id, remoteJid, this.deviceId, message),
+					{ id },
+				);
+			}
+		});
+
+		sock.ev.on('messages.reaction', (reactions) => {
+			for (const data of reactions) {
+				const id = data.key.id;
+				const remoteJid = data.key.remoteJid;
+				const reaction = data.reaction;
+
+				if (!id || !remoteJid) continue;
+				if (!reaction) continue;
+
+				this._messageSaveQueue.add(
+					() =>
+						MessageTable.addReactions(id, remoteJid, this.deviceId, reaction),
+					{ id },
+				);
+			}
+		});
+
+		sock.ev.on('messaging-history.set', ({ contacts, messages }) => {
+			for (const contact of contacts) {
+				console.log('Saving contact from history', contact.id);
+				const id = contact.id;
+				if (!id) continue;
+
+				this._contactsQueue.add(
+					() => ContactTable.upsert(this.deviceId, contact),
+					{ id },
+				);
+			}
+
+			for (const message of messages) {
+				const id = message.key.id;
+				const remoteJid = message.key.remoteJid;
+
+				if (!id || !remoteJid) continue;
+
+				this._messageSaveQueue.add(
+					() => {
+						return MessageTable.upsert(id, remoteJid, this.deviceId, message);
+					},
+					{ id: id },
+				);
+			}
+		});
+
+		sock.ev.on('contacts.update', (contacts) => {
+			for (const contact of contacts) {
+				const id = contact.id;
+				if (!id) continue;
+
+				this._contactsQueue.add(
+					() => ContactTable.update(this.deviceId, contact),
+					{ id: id },
+				);
+			}
+		});
+
+		sock.ev.on('contacts.upsert', (contacts) => {
+			for (const contact of contacts) {
+				this._contactsQueue.add(
+					() => ContactTable.upsert(this.deviceId, contact),
+					{ id: contact.id },
+				);
+			}
+		});
+	}
+
+	public async disconnect() {
+		if (this._socket) {
+			this._socket.end(new Error('Connection closed by client'));
+		} else {
+			this._cleanup(false, 'Connection closed by client');
+		}
+	}
+
+	public async logout() {
+		if (this._socket) {
+			await this._socket.logout();
+		} else {
+			this._cleanup(false, 'Connection closed by client');
+		}
+	}
+
+	public async sendMessage(
+		jid: string,
+		content: AnyMessageContent,
+		options?: MiscMessageGenerationOptions,
+	) {
+		const socket = this._socket;
+		if (!socket) {
+			return false;
+		}
+
+		const id = Bun.hash
+			.rapidhash(jid + JSON.stringify(options ?? null))
+			.toString();
+
+		this._messageSendQueue.add(
+			async () => {
+				try {
+					await socket.presenceSubscribe(jid);
+					await socket.sendPresenceUpdate('available', jid);
+
+					await sleep(1000 * randomInt(1, 3));
+
+					const text = (content as any).caption ?? (content as any).text ?? '';
+					const typingSpeed = randomInt(25, 30);
+					const typingDurationSec = Math.max(
+						1,
+						Math.ceil(text.length / typingSpeed),
+					);
+					const intervalSec = 2;
+					const iterations = Math.ceil(typingDurationSec / intervalSec);
+
+					for (let i = 0; i < iterations; i++) {
+						await socket.sendPresenceUpdate('composing', jid);
+						await Bun.sleep(randomInt(3, 8) * 100);
+					}
+
+					await socket.sendPresenceUpdate('available', jid);
+					const res = await socket.sendMessage(jid, content, options);
+
+					if (res) {
+						return Promise.resolve(res);
+					}
+
+					throw new Error('Message sending returned null result');
+				} catch (error) {
+					return Promise.reject(`Failed to send message: ${error}`);
+				}
+			},
+			{ id: id },
+		);
+
+		return true;
+	}
+
+	public async refreshGroupMetadata() {
+		if (!this._socket) return false;
+
+		this._groupMetadataRefreshQueue.add(async () => {
+			try {
+				await this._socket?.groupFetchAllParticipating();
+
+				return true;
+			} catch (err) {
+				console.warn('Failed to fetch group metadata', err);
+				this.emit(
+					'error',
+					new Error('Failed to fetch group metadata', { cause: err }),
+				);
+				return false;
+			}
+		});
+
+		return true;
+	}
+
+	private _cleanup(
+		isRestart: boolean = false,
+		reason?: string,
+		callback?: () => void,
+	) {
+		if (this._socket) {
+			this._socket.end(new Error('Connection closed by client'));
+		} else {
+			this.emit('state', 'close');
+		}
+		this._socket = null;
+		this._state = 'close';
+		this._auth = null;
+
+		this.emit('close', {
+			reason: reason ?? 'Connection closed by client',
+			isRestart,
+		});
+
+		if (!isRestart) {
+			this._msgRetryCounterCache.flushAll();
+			this._userDevicesCache.flushAll();
+			this._placeholderResendCache.flushAll();
+			this._groupMetadataQueue.clear();
+			this._messageSaveQueue.clear();
+			this._messageSendQueue.clear();
+			this._contactsQueue.clear();
+		}
+
+		if (callback) {
+			callback();
+		}
+	}
 }
