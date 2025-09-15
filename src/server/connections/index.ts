@@ -9,7 +9,7 @@ export const connections = new Elysia({
     const data = await Connection.getAll();
 
     return {
-      data: data
+      data: data,
     };
   })
   .post(
@@ -54,31 +54,39 @@ export const connections = new Elysia({
       body: ConnectionModel.Start,
     }
   )
-  .post('/stop', async ({body, set}) => {
-    if (!Connection.has({ deviceId: body.deviceId })) {
-      set.status = 400;
-      return { error: 'Connection not found' };
-    }
+  .post(
+    '/stop',
+    async ({ body, set }) => {
+      if (!Connection.has({ deviceId: body.deviceId })) {
+        set.status = 400;
+        return { error: 'Connection not found' };
+      }
 
-    Connection.stop(body);
+      Connection.stop(body);
 
-    return {
-      message: 'Connection stopped',
+      return {
+        message: 'Connection stopped',
+      };
+    },
+    {
+      body: ConnectionModel.Default,
     }
-  }, {
-    body: ConnectionModel.Default,
-  })
-  .post('/logout', async ({body, set}) => {
-    if (!Connection.has({ deviceId: body.deviceId })) {
-      set.status = 400;
-      return { error: 'Connection not found' };
-    }
+  )
+  .post(
+    '/logout',
+    async ({ body, set }) => {
+      if (!Connection.has({ deviceId: body.deviceId })) {
+        set.status = 400;
+        return { error: 'Connection not found' };
+      }
 
-    Connection.logout(body);
+      Connection.logout(body);
 
-    return {
-      message: 'Connection logged out',
+      return {
+        message: 'Connection logged out',
+      };
+    },
+    {
+      body: ConnectionModel.Default,
     }
-  }, {
-    body: ConnectionModel.Default,
-  });
+  );
