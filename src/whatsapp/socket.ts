@@ -74,7 +74,6 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			const phoneNumber = isPnUser(this._socket.user.id)
 				? jidDecode(jidNormalizedUser(this._socket.user.id))?.user
 				: null;
-			this._socket.user.name;
 			return {
 				id: phoneNumber,
 				lid: this._socket.user.lid ?? null,
