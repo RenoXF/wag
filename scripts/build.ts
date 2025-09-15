@@ -1,12 +1,12 @@
 import { mkdirSync, rmSync } from 'node:fs';
-import pkg from '../package.json';
+import { version } from '../package.json';
 
 rmSync('./out', { recursive: true, force: true });
 mkdirSync('./out', { recursive: true, });
 
 const platforms: Bun.CompileBuildOptions[] = [
-  { target: 'bun-windows-x64', outfile: 'wag-windows.exe' },
-  { target: 'bun-linux-x64', outfile: 'wag-linux' },
+  { target: 'bun-windows-x64', outfile: `wag-windows-${version}.exe` },
+  { target: 'bun-linux-x64', outfile: `wag-linux-${version}` },
   // { target: 'bun-darwin-arm64', outfile: 'wag-macos' },
 ];
 
@@ -18,7 +18,7 @@ for (const platform of platforms) {
     compile: platform,
     minify: true,
     define: {
-      'BUILD_VERSION': pkg.version,
+      'BUILD_VERSION': version,
       'NODE_ENV': 'production',
       'TZ': 'Asia/Jakarta',
     }
