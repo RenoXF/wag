@@ -58,6 +58,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
   protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 });
   protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 30 });
   protected _messageSendQueue = new PQueue({ concurrency: 1 });
+  protected _groupMetadataRefreshQueue = new PQueue({
+    concurrency: 1,
+    interval: 60_000,
+    intervalCap: 1,
+  });
 
   constructor(public readonly deviceId: string) {
     super();
@@ -386,7 +391,9 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
       return false;
     }
 
-    const id = Bun.hash.rapidhash(jid + JSON.stringify(options ?? null)).toString();
+    const id = Bun.hash
+      .rapidhash(jid + JSON.stringify(options ?? null))
+      .toString();
 
     this._messageSendQueue.add(
       async () => {
@@ -431,18 +438,22 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
   public async refreshGroupMetadata() {
     if (!this._socket) return false;
 
-    try {
-      await this._socket.groupFetchAllParticipating();
+    this._groupMetadataRefreshQueue.add(async () => {
+      try {
+        await this._socket?.groupFetchAllParticipating();
 
-      return true;
-    } catch (err) {
-      console.warn('Failed to fetch group metadata', err);
-      this.emit(
-        'error',
-        new Error('Failed to fetch group metadata', { cause: err })
-      );
-      return false;
-    }
+        return true;
+      } catch (err) {
+        console.warn('Failed to fetch group metadata', err);
+        this.emit(
+          'error',
+          new Error('Failed to fetch group metadata', { cause: err })
+        );
+        return false;
+      }
+    });
+
+    return true;
   }
 
   private _cleanup(
