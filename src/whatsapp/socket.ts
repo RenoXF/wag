@@ -223,6 +223,14 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				setTimeout(() => {
 					this.refreshGroupMetadata();
 				}, 1000);
+        setTimeout(() => {
+          if (this._socket) {
+            this._socket.sendPresenceUpdate('available')
+              .catch((err) => {
+                console.error('Failed to send initial presence update:', err);
+              });
+          }
+        });
 				this.emit('ready', sock);
 			}
 		});
