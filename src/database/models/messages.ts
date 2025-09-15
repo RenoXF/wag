@@ -35,17 +35,18 @@ export abstract class MessageTable {
 		const type = getContentType(data.message ?? undefined) || 'unknown';
 		const device = getDevice(id);
 
-		return await sql`INSERT INTO messages (id, device_id, remote_jid, from_me, type, device,  is_real_message, text, data)
-      VALUES
-        (${id}, ${deviceId}, ${remoteJid}, ${fromMe}, ${type}, ${device}, ${isRealMsg}, ${text}, ${transformBuffer(
-					data,
-				)})
-      ON CONFLICT (id, device_id)
-      DO UPDATE SET
-        data = messages.data || EXCLUDED.data,
-        text = COALESCE(EXCLUDED.text, messages.text),
-        updated_at = NOW();
-    `;
+		const buffer = transformBuffer(data);
+
+		return await sql`INSERT INTO messages
+      (id, device_id, remote_jid, from_me, type, device, is_real_message, text, data)
+	  VALUES
+		  (${id}, ${deviceId}, ${remoteJid}, ${fromMe}, ${type}, ${device}, ${isRealMsg}, ${text}, ${buffer})
+	  ON CONFLICT (id, device_id)
+	  DO UPDATE SET
+		data = messages.data || EXCLUDED.data,
+		text = COALESCE(EXCLUDED.text, messages.text),
+		updated_at = NOW();
+	`;
 	}
 
 	public static async updateMessage(
