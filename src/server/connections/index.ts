@@ -4,6 +4,10 @@ import { Connection } from './service';
 
 export const connections = new Elysia({
   prefix: '/connections',
+  detail: {
+    tags: ['Connections'],
+    description: 'Endpoints to manage connections',
+  }
 })
   .get('/', async () => {
     const data = await Connection.getAll();
@@ -11,6 +15,11 @@ export const connections = new Elysia({
     return {
       data: data,
     };
+  }, {
+    detail: {
+      summary: 'Get all active connections',
+      description: 'Retrieve a list of all active connections with their details.',
+    }
   })
   .post(
     '/start',
@@ -52,6 +61,10 @@ export const connections = new Elysia({
     },
     {
       body: ConnectionModel.Start,
+      detail: {
+        summary: 'Start a new connections',
+        description: 'Initiate a new connection with the provided device ID and optional webhook URL.',
+      }
     }
   )
   .post(
@@ -70,6 +83,10 @@ export const connections = new Elysia({
     },
     {
       body: ConnectionModel.Default,
+      detail: {
+        summary: 'Stop an active connection',
+        description: 'Terminate an existing connection using the provided device ID.',
+      }
     }
   )
   .post(
@@ -88,5 +105,9 @@ export const connections = new Elysia({
     },
     {
       body: ConnectionModel.Default,
+      detail: {
+        summary: 'Logout from an active connection',
+        description: 'Log out from an existing connection using the provided device ID.',
+      }
     }
   );

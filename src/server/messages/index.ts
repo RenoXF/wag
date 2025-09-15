@@ -6,6 +6,11 @@ import { isJidGroup, isLidUser, isPnUser } from 'baileys';
 
 export const messages = new Elysia({
   prefix: '/messages',
+  detail: {
+    summary: 'Messages Management',
+    description: 'Endpoints to manage WhatsApp messages',
+    tags: ['Messages'],
+  },
 })
   .get(
     '/',
@@ -18,6 +23,11 @@ export const messages = new Elysia({
     },
     {
       query: MessageModel.GetAll,
+      detail: {
+        summary: 'Get all messages for a specific device',
+        description:
+          'Retrieve a list of all WhatsApp messages associated with the specified device ID. Optionally, filter by recipient JID.',
+      },
     }
   )
   .post(
@@ -67,5 +77,10 @@ export const messages = new Elysia({
     },
     {
       body: MessageModel.SendTextMessage,
+      detail: {
+        summary: 'Send a text message to a specific recipient',
+        description:
+          'Send a text message to a specified recipient JID using the provided device ID.',
+      },
     }
   );

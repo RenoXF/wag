@@ -5,6 +5,11 @@ import { WaStore } from '../../whatsapp';
 
 export const groups = new Elysia({
   prefix: '/groups',
+  detail: {
+    summary: 'Groups Management',
+    description: 'Endpoints to manage WhatsApp groups',
+    tags: ['Groups'],
+  },
 })
   .get(
     '/',
@@ -17,6 +22,11 @@ export const groups = new Elysia({
     },
     {
       query: GroupModel.index,
+      detail: {
+        summary: 'Get all groups for a specific device',
+        description:
+          'Retrieve a list of all WhatsApp groups associated with the specified device ID.',
+      },
     }
   )
   .post(
@@ -45,5 +55,10 @@ export const groups = new Elysia({
     },
     {
       body: GroupModel.index,
+      detail: {
+        summary: 'Refresh group metadata',
+        description:
+          'Trigger a refresh of the group metadata for the specified device ID. This updates the local cache with the latest group information from WhatsApp servers. Rate limited to 1 request per minute per device to avoid overloading the WhatsApp servers.',
+      },
     }
   );
