@@ -33,7 +33,7 @@ export namespace MessageModel {
 				}),
 			),
 		),
-		perPage: t.Optional(
+		page: t.Optional(
 			t.Nullable(
 				t.Number({
 					default: 1,

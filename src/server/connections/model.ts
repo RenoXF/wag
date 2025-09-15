@@ -10,13 +10,13 @@ export namespace ConnectionModel {
 
 	export const Start = t.Object({
 		...Default.properties,
-		webhookUrl: t.Nullable(
+		webhookUrl: t.Optional(t.Nullable(
 			t.Optional(
 				t.String({
 					format: 'uri',
 				}),
 			),
-		),
+		)),
 	});
 	export type Start = typeof Start.static;
 }

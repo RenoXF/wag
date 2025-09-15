@@ -7,14 +7,14 @@ export abstract class Message {
 		fromMe,
 		realMessage,
 		limit,
-		perPage,
+		page,
 	}: MessageModel.GetAll) {
 		return await MessageTable.getAll(
 			deviceId,
 			fromMe ?? true,
 			realMessage ?? true,
 			limit ?? 100,
-			perPage ?? 1,
+			page ?? 1,
 		);
 	}
 }
