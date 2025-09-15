@@ -2,7 +2,7 @@
 	"name": "wag",
 	"module": "src/index.ts",
 	"type": "module",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"private": true,
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
@@ -18,7 +18,7 @@
 	"scripts": {
 		"format": "biome check --write",
 		"start": "NODE_ENV=production bun src/index.ts",
-    "bundle": "bun ./scripts/build.ts"
+		"bundle": "bun ./scripts/build.ts"
 	},
 	"dependencies": {
 		"@elysiajs/eden": "^1.4.1",
