@@ -31,6 +31,8 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"elysia": "^1.4.5",
+		"jimp": "^1.6.0",
+		"link-preview-js": "^3.1.0",
 		"lucide-react": "^0.544.0",
 		"p-queue": "^8.1.1",
 		"pino-pretty": "^13.1.1",
