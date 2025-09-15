@@ -4,6 +4,7 @@ import {
   getContentType,
   type proto,
   type WAMessage,
+  getDevice,
 } from 'baileys';
 import sql from '../db';
 import { reviveBuffer, transformBuffer } from '../utils';
@@ -32,10 +33,11 @@ export abstract class MessageTable {
     const isRealMsg = isRealMessage(data, deviceId);
     const text = extractText(data);
     const type = getContentType(data.message ?? undefined) || 'unknown';
+    const device = getDevice(id)
 
-    return await sql`INSERT INTO messages (id, device_id, remote_jid, from_me, type, is_real_message, text, data)
+    return await sql`INSERT INTO messages (id, device_id, remote_jid, from_me, type, device,  is_real_message, text, data)
       VALUES
-        (${id}, ${deviceId}, ${remoteJid}, ${fromMe}, ${type}, ${isRealMsg}, ${text}, ${transformBuffer(
+        (${id}, ${deviceId}, ${remoteJid}, ${fromMe}, ${type}, ${device}, ${isRealMsg}, ${text}, ${transformBuffer(
       data
     )})
       ON CONFLICT (id, device_id)

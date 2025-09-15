@@ -68,6 +68,7 @@ export const runMigration = async () => {
       "from_me" boolean NOT NULL,
       "is_real_message" boolean DEFAULT true,
       "type" text NOT NULL,
+      "device" text NOT NULL,
       "device_id" varchar(26) NOT NULL,
       "data" jsonb NOT NULL,
       "text" text,
