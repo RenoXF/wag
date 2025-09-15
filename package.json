@@ -17,7 +17,8 @@
 	},
 	"scripts": {
 		"format": "biome check --write",
-		"start": "NODE_ENV=production bun src/index.ts"
+		"start": "NODE_ENV=production bun src/index.ts",
+    "bundle": "bun ./scripts/build.ts"
 	},
 	"dependencies": {
 		"@elysiajs/eden": "^1.4.1",
