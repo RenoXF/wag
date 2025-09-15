@@ -118,4 +118,32 @@ export const connections = new Elysia({
 					'Log out from an existing connection using the provided device ID.',
 			},
 		},
+	)
+	.post(
+		'/qr-code',
+		async ({ body, set }) => {
+			if (!Connection.has({ deviceId: body.deviceId })) {
+				set.status = 400;
+				return { error: 'Connection not found' };
+			}
+
+			const qrData = await Connection.getQrCode(body);
+
+			if (!qrData) {
+				set.status = 400;
+				return { error: 'QR code not available' };
+			}
+
+			return {
+				data: qrData,
+			};
+		},
+		{
+			body: ConnectionModel.Default,
+			detail: {
+				summary: 'Get QR code for a connection',
+				description:
+					'Retrieve the QR code for an existing connection if available.',
+			},
+		},
 	);

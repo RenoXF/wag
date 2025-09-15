@@ -8,6 +8,8 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Modal } from "../components/ui/modal";
+import { QrCodeComponent } from "../components/ui/qr-code";
 import { client } from "../lib/api";
 import type { IConnection } from "@/server/connections/service";
 import type { WAConnectionState } from "baileys";
@@ -24,9 +26,28 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [qrCodeModal, setQrCodeModal] = useState<{
+    isOpen: boolean;
+    deviceId: string;
+    qrCode: string;
+  }>({
+    isOpen: false,
+    deviceId: "",
+    qrCode: "",
+  });
+  const [qrLoading, setQrLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConnections();
+  }, []);
+
+  // Auto-refresh every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchConnections();
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchConnections = async () => {
@@ -111,6 +132,40 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleShowQrCode = async (deviceId: string) => {
+    try {
+      setQrLoading(deviceId);
+      setError(null);
+
+      const response = await client.connections["qr-code"].post({ deviceId });
+
+      if (response.data?.data?.qrCode) {
+        setQrCodeModal({
+          isOpen: true,
+          deviceId,
+          qrCode: response.data.data.qrCode,
+        });
+      } else {
+        setError("QR code not available for this connection");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to get QR code"
+      );
+      console.error("Error fetching QR code:", err);
+    } finally {
+      setQrLoading(null);
+    }
+  };
+
+  const closeQrModal = () => {
+    setQrCodeModal({
+      isOpen: false,
+      deviceId: "",
+      qrCode: "",
+    });
   };
 
   const getStatusColor = (status: WAConnectionState) => {
@@ -291,6 +346,23 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
                   )}
 
                   <div className="flex flex-wrap gap-2">
+                    {connection.state === "connecting" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleShowQrCode(connection.deviceId)}
+                        disabled={qrLoading === connection.deviceId}
+                        className="flex items-center"
+                      >
+                        {qrLoading === connection.deviceId ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        ) : (
+                          <span className="mr-2">📱</span>
+                        )}
+                        Show QR Code
+                      </Button>
+                    )}
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -329,6 +401,34 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
           ))
         )}
       </div>
+
+      {/* QR Code Modal */}
+      <Modal
+        isOpen={qrCodeModal.isOpen}
+        onClose={closeQrModal}
+        title={`QR Code for ${qrCodeModal.deviceId}`}
+      >
+        <div className="space-y-4">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Scan this QR code with your WhatsApp mobile app to connect.
+            </p>
+            {qrCodeModal.qrCode && (
+              <QrCodeComponent
+                value={qrCodeModal.qrCode}
+                size={256}
+                className="mb-4"
+              />
+            )}
+            <p className="text-xs text-muted-foreground">
+              Open WhatsApp → Settings → Linked Devices → Link a Device
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={closeQrModal}>Close</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

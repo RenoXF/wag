@@ -122,4 +122,18 @@ export abstract class Connection {
   public static async getInstance() {
     //
   }
+
+  public static async getQrCode({ deviceId }: ConnectionModel.Default) {
+    if (WaStore.has(deviceId)) {
+      const socket = WaStore.get(deviceId);
+      if (socket?.auth && socket.auth.via === 'qr_code') {
+        return {
+          qrCode: socket.auth.data,
+          state: socket.state,
+        };
+      }
+    }
+
+    return null;
+  }
 }

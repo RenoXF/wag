@@ -8,6 +8,7 @@
 		"@biomejs/biome": "2.2.4",
 		"@types/bun": "^1.2.22",
 		"@types/node": "^24.4.0",
+		"@types/qrcode-generator": "^1.0.6",
 		"@types/react": "^19.1.13",
 		"@types/react-dom": "^19.1.9"
 	},
@@ -33,6 +34,7 @@
 		"lucide-react": "^0.544.0",
 		"p-queue": "^8.1.1",
 		"pino-pretty": "^13.1.1",
+		"qrcode-generator": "^2.0.4",
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1",
 		"react-router-dom": "^7.9.1",
