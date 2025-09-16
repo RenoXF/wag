@@ -105,11 +105,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
 		// fetch latest version of WA Web
-		const { version, isLatest } = await fetchLatestBaileysVersion();
-		console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+		// const { version, isLatest } = await fetchLatestBaileysVersion();
+		// console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
 		const sock = makeWASocket({
-			version,
+			// version,
 			logger: this.logger,
 			browser: Browsers.ubuntu('Chrome'),
 			auth: {
@@ -168,6 +168,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				const statusMsg = (lastDisconnect?.error as Boom)?.message ?? '';
 
 				if (statusMsg.toLowerCase().includes('qr refs attempts ended')) {
+          // console.log('QR attempts ended');
 					this._cleanup(false, statusMsg, clearCreds);
 					return;
 				}
@@ -383,6 +384,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		if (this._socket) {
 			await this._socket.logout();
 		} else {
+      // console.log('Socket is not connected, nothing to logout');
 			this._cleanup(false, 'Connection closed by client');
 		}
 	}
@@ -464,11 +466,14 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		reason?: string,
 		callback?: () => void,
 	) {
-		if (this._socket) {
-			this._socket.end(new Error('Connection closed by client'));
-		} else {
-			this.emit('state', 'close');
-		}
+    if (isRestart === false) {
+      if (this._socket) {
+        // console.log('Cleaning up socket', isRestart ? 'for restart' : 'not for restart');
+        this._socket.end(new Error('Connection closed by client'));
+      } else {
+        this.emit('state', 'close');
+      }
+    }
 		this._socket = null;
 		this._state = 'close';
 		this._auth = null;
