@@ -376,7 +376,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 	public async disconnect() {
 		if (this._socket) {
-			this._socket.end(new Error('Connection closed by client'));
+			this._socket.end(new Error('Connection closed by client, disconnect called'));
 		}
 	}
 
@@ -385,7 +385,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			await this._socket.logout();
 		} else {
       // console.log('Socket is not connected, nothing to logout');
-			this._cleanup(false, 'Connection closed by client');
+			this._cleanup(false, 'Connection closed by client, logout called');
 		}
 	}
 
@@ -469,7 +469,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
     if (isRestart === false) {
       if (this._socket) {
         // console.log('Cleaning up socket', isRestart ? 'for restart' : 'not for restart');
-        this._socket.end(new Error('Connection closed by client'));
+        this._socket.end(new Error('Connection closed by client, cleanup called'));
       } else {
         this.emit('state', 'close');
       }
@@ -479,7 +479,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		this._auth = null;
 
 		this.emit('close', {
-			reason: reason ?? 'Connection closed by client',
+			reason: reason ?? 'Connection closed by client, cleanup with no reason',
 			isRestart,
 		});
 
