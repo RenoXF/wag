@@ -182,10 +182,10 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				const restartedCodes = [
 					DisconnectReason.restartRequired,
 					DisconnectReason.connectionLost,
+          DisconnectReason.connectionClosed,
 				];
 
 				const loggedOutCodes = [
-					DisconnectReason.connectionClosed,
 					DisconnectReason.unavailableService,
 					DisconnectReason.badSession,
 					DisconnectReason.loggedOut,
