@@ -52,7 +52,9 @@ export abstract class Connection {
       // console.log('Connection closed:', reason, isRestart);
       await whQueue.add(() => sendWebhook({ event: 'close', data: { reason, isRestart } }, webhookUrl));
       whQueue.clear();
-      await WaStore.get(deviceId)?.disconnect();
+      if (isRestart === false) {
+        await WaStore.get(deviceId)?.disconnect();
+      }
 
       WaStore.delete(deviceId);
     });
