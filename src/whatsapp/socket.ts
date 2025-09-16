@@ -67,7 +67,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 	constructor(public readonly deviceId: string, public readonly webhookUrl?: string | null) {
 		super();
-		this.logger = P({ level: 'error' }).child({ deviceId });
+		this.logger = P({ level: 'fatal' }).child({ deviceId });
 	}
 
 	public get user() {
