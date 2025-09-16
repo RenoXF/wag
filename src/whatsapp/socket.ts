@@ -105,11 +105,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
 		// fetch latest version of WA Web
-		// const { version, isLatest } = await fetchLatestBaileysVersion();
-		// console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+		const { version, isLatest } = await fetchLatestBaileysVersion();
+		console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
 		const sock = makeWASocket({
-			// version,
+			version,
 			logger: this.logger,
 			browser: Browsers.ubuntu('Chrome'),
 			auth: {
