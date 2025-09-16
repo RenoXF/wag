@@ -40,6 +40,7 @@ export abstract class Connection {
     socket.on('ready', () => {
       // console.log('Socket is ready');
       whQueue.add(() => sendWebhook({ event: 'ready', data: {} }, webhookUrl));
+      WaStore.set(deviceId, socket);
     });
 
     socket.on('state', (state) => {
