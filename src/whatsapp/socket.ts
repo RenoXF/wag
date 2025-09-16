@@ -54,6 +54,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	protected _placeholderResendCache = new NodeCache({
 		stdTTL: 60 * 60, // 1 hour
 	}) as CacheStore;
+  protected _retriesCount = 0;
 
 	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 });
 	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 });
@@ -104,6 +105,12 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		}
 
 		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
+
+    if (this._retriesCount >= 15) {
+      this._cleanup(false, 'Maximum retries reached, cleared credentials', clearCreds);
+      return;
+    }
+
 		// fetch latest version of WA Web
 		// const { version, isLatest } = await fetchLatestBaileysVersion();
 		// console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
@@ -200,6 +207,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 						`Connection closed, restarting (${statusCode} - ${statusMsg})`,
 					);
 					this._cleanup(true, statusMsg);
+          this._retriesCount++;
 					return this.connect().catch((err) => {
 						this.emit('error', err);
 					});
@@ -222,6 +230,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				// we're connected
 				this._auth = null;
 				this._socket = sock;
+        this._retriesCount = 0;
         setTimeout(() => {
           if (this._socket) {
             this._socket.sendPresenceUpdate('available')
