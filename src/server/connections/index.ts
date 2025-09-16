@@ -38,7 +38,6 @@ export const connections = new Elysia({
 
 			if (webhookUrl) {
 				try {
-          console.log('Validating webhook URL:', webhookUrl);
 					const res = await fetch(webhookUrl, {
 						method: 'POST',
             headers: { 'Content-Type': 'application/json' },

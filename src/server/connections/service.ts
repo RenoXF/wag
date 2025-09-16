@@ -30,7 +30,7 @@ export abstract class Connection {
     const socket = new WaSocket(deviceId, webhookUrl);
 
     socket.on('auth', (auth) => {
-      console.log('Authenticated:', auth);
+      // console.log('Authenticated:', auth);
       whQueue.add(() => sendWebhook({
         event: 'auth',
         data: { auth }
@@ -38,17 +38,17 @@ export abstract class Connection {
     });
 
     socket.on('ready', () => {
-      console.log('Socket is ready');
+      // console.log('Socket is ready');
       whQueue.add(() => sendWebhook({ event: 'ready', data: {} }, webhookUrl));
     });
 
     socket.on('state', (state) => {
-      console.log('Connection state:', state);
+      // console.log('Connection state:', state);
       whQueue.add(() => sendWebhook({ event: 'state', data: { state } }, webhookUrl));
     });
 
     socket.on('close', async ({ reason, isRestart }) => {
-      console.log('Connection closed:', reason, isRestart);
+      // console.log('Connection closed:', reason, isRestart);
       await whQueue.add(() => sendWebhook({ event: 'close', data: { reason, isRestart } }, webhookUrl));
       whQueue.clear();
       await WaStore.get(deviceId)?.disconnect();

@@ -105,11 +105,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
 		// fetch latest version of WA Web
-		const { version, isLatest } = await fetchLatestBaileysVersion();
-		console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+		// const { version, isLatest } = await fetchLatestBaileysVersion();
+		// console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
 		const sock = makeWASocket({
-			version,
+			// version,
 			logger: this.logger,
 			browser: Browsers.ubuntu('Chrome'),
 			auth: {
@@ -173,7 +173,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				}
 
 				if (statusMsg.toLowerCase().includes('proxy connection timed out')) {
-					console.log('Proxy connection timed out');
+					// console.log('Proxy connection timed out');
 					this._cleanup(false, statusMsg, clearCreds);
 					return;
 				}
@@ -326,7 +326,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 		sock.ev.on('messaging-history.set', ({ contacts, messages }) => {
 			for (const contact of contacts) {
-				console.log('Saving contact from history', contact.id);
+				// console.log('Saving contact from history', contact.id);
 				const id = contact.id;
 				if (!id) continue;
 
