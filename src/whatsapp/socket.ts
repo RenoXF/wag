@@ -231,7 +231,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
                 console.error('Failed to send initial presence update:', err);
               });
           }
-        });
+        }, 1000);
 				this.emit('ready', sock);
 			}
 		});
