@@ -2,7 +2,7 @@
 	"name": "wag",
 	"module": "src/index.ts",
 	"type": "module",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"private": true,
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
