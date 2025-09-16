@@ -3,6 +3,8 @@ import { Elysia } from 'elysia';
 import { WaStore } from '../../whatsapp';
 import { MessageModel } from './model';
 import { Message } from './service';
+import { queue } from '../queue';
+import { sendWebhook } from '../webhook';
 
 export const messages = new Elysia({
 	prefix: '/messages',
@@ -60,16 +62,32 @@ export const messages = new Elysia({
 				};
 			}
 
-			const res = await whatsapp.sendMessage(jid, {
-				text: body.message,
-			});
+      const whQueue = queue.add(body.deviceId);
+      const webhookUrl = whatsapp.webhookUrl;
+      const id = body.id ?? null;
 
-			if (!res) {
-				set.status = 500;
-				return {
-					error: 'Failed to send message, please try again later',
-				};
-			}
+      whatsapp.sendMessage(jid, {
+        text: body.message,
+      }).then(() => whQueue.add(() => sendWebhook({
+        event: 'message_sent',
+        data: {
+          id,
+          deviceId: body.deviceId,
+          message: body.message,
+          recipient: body.recipient
+         }
+      }, webhookUrl)))
+      .catch((err) => whQueue.add(() => sendWebhook({
+        event: 'message_error',
+        data: {
+          id,
+          deviceId: body.deviceId,
+          message: body.message,
+          recipient: body.recipient,
+          error: err?.message ?? 'Unknown error'
+         }
+      }, webhookUrl)))
+
 
 			return {
 				success: true,

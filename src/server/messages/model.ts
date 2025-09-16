@@ -46,6 +46,9 @@ export namespace MessageModel {
 
 	export const SendTextMessage = t.Object({
 		...Default.properties,
+    id: t.Nullable(t.Optional(t.String({
+      minLength: 1,
+    }))),
 		message: t.String({
 			minLength: 1,
 			maxLength: 4096,
