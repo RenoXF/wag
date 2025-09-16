@@ -50,12 +50,11 @@ export abstract class Connection {
 
     socket.on('close', async ({ reason, isRestart }) => {
       // console.log('Connection closed:', reason, isRestart);
-      await whQueue.add(() => sendWebhook({ event: 'close', data: { reason, isRestart } }, webhookUrl));
-      whQueue.clear();
       if (isRestart === false) {
         await WaStore.get(deviceId)?.disconnect();
       }
-
+      whQueue.clear();
+      await sendWebhook({ event: 'close', data: { reason, isRestart } }, webhookUrl)
       WaStore.delete(deviceId);
     });
 
