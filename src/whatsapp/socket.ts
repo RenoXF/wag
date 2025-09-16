@@ -18,6 +18,7 @@ import makeWASocket, {
 	makeCacheableSignalKeyStore,
 	type WAConnectionState,
 	type WASocket,
+  proto,
 } from 'baileys';
 import { sleep } from 'bun';
 import PQueue from 'p-queue';
@@ -390,17 +391,17 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		jid: string,
 		content: AnyMessageContent,
 		options?: MiscMessageGenerationOptions,
-	) {
+	): Promise<proto.WebMessageInfo | void> {
 		const socket = this._socket;
 		if (!socket) {
-			return false;
+			return Promise.reject('Socket is not connected');
 		}
 
 		const id = Bun.hash
 			.rapidhash(jid + JSON.stringify(options ?? null))
 			.toString();
 
-		this._messageSendQueue.add(
+		return await this._messageSendQueue.add(
 			async () => {
 				try {
 					await socket.presenceSubscribe(jid);
@@ -428,16 +429,13 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					if (res) {
 						return Promise.resolve(res);
 					}
-
-					throw new Error('Message sending returned null result');
+          return Promise.reject('Failed to send message: Unknown error');
 				} catch (error) {
 					return Promise.reject(`Failed to send message: ${error}`);
 				}
 			},
 			{ id: id },
 		);
-
-		return true;
 	}
 
 	public async refreshGroupMetadata() {
