@@ -38,9 +38,12 @@ export const connections = new Elysia({
 
 			if (webhookUrl) {
 				try {
+          console.log('Validating webhook URL:', webhookUrl);
 					const res = await fetch(webhookUrl, {
 						method: 'POST',
-						body: JSON.stringify({ event: 'ping' }),
+            headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ event: 'ping', data: { deviceId: body.deviceId } }),
+            signal: AbortSignal.timeout(5000) // 5 seconds timeout
 					});
 
 					if (!res.ok) {
@@ -49,7 +52,6 @@ export const connections = new Elysia({
 						return { error: 'Webhook URL must be return 200 HTTP Code' };
 					}
 				} catch (error) {
-					console.error('Error fetching webhook URL:', error);
 					set.status = 400;
 
 					return error instanceof Error
