@@ -221,9 +221,6 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				// we're connected
 				this._auth = null;
 				this._socket = sock;
-				setTimeout(() => {
-					this.refreshGroupMetadata();
-				}, 1000);
         setTimeout(() => {
           if (this._socket) {
             this._socket.sendPresenceUpdate('available')
@@ -232,6 +229,9 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
               });
           }
         }, 1000);
+        setTimeout(() => {
+					this.refreshGroupMetadata();
+				}, 3000);
 				this.emit('ready', sock);
 			}
 		});
