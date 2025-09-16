@@ -1,7 +1,8 @@
 import type { WAConnectionState } from 'baileys';
-import PQueue from 'p-queue';
 import { WaSocket, WaStore, type WhatsappAuth } from '../../whatsapp';
 import type { ConnectionModel } from './model';
+import { queue } from '../queue';
+import { sendWebhook } from '../webhook';
 
 export type IConnection = {
   deviceId: string;
@@ -25,47 +26,30 @@ export abstract class Connection {
       return;
     }
 
-    const whQueue = new PQueue({ concurrency: 1 });
-    const socket = new WaSocket(deviceId);
-
-    const sendWebhook = (event: string, data: object) => {
-      if (webhookUrl) {
-        return fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: event,
-            data: {
-              deviceId,
-              ...data,
-            },
-          }),
-        }).catch((err) => {
-          console.error('Error sending auth webhook:', err);
-        });
-      }
-
-      return Promise.resolve();
-    };
+    const whQueue = queue.add(deviceId);
+    const socket = new WaSocket(deviceId, webhookUrl);
 
     socket.on('auth', (auth) => {
       console.log('Authenticated:', auth);
-      whQueue.add(() => sendWebhook('auth', { auth }));
+      whQueue.add(() => sendWebhook({
+        event: 'auth',
+        data: { auth }
+      }, webhookUrl));
     });
 
     socket.on('ready', () => {
       console.log('Socket is ready');
-      whQueue.add(() => sendWebhook('ready', {}));
+      whQueue.add(() => sendWebhook({ event: 'ready', data: {} }, webhookUrl));
     });
 
     socket.on('state', (state) => {
       console.log('Connection state:', state);
-      whQueue.add(() => sendWebhook('state', { state }));
+      whQueue.add(() => sendWebhook({ event: 'state', data: { state } }, webhookUrl));
     });
 
     socket.on('close', async ({ reason, isRestart }) => {
       console.log('Connection closed:', reason, isRestart);
-      await whQueue.add(() => sendWebhook('close', { reason, isRestart }));
+      await whQueue.add(() => sendWebhook({ event: 'close', data: { reason, isRestart } }, webhookUrl));
       whQueue.clear();
       await WaStore.get(deviceId)?.disconnect();
 
