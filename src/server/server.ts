@@ -44,6 +44,7 @@ export const server = new Elysia({})
         uptime: Math.floor(process.uptime()),
         timestamp: Date.now(),
         memory: Math.round(process.memoryUsage.rss() / 1024 / 1024), // in MB
+        version: pkg.version,
       };
     },
     {
