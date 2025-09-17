@@ -24,6 +24,9 @@ const shutdown = async (code: string) => {
       webhookUrl
     );
   }
+  console.log('Shutting down database connection...');
+  await sql.end();
+
   console.log(`Server closed with code: ${code}`);
 
   process.exit(0);
