@@ -104,6 +104,10 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			throw new Error('Socket is already connected');
 		}
 
+    if (this._retriesCount > 0) {
+      await Bun.sleep(1000);
+    }
+
 		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
 
     if (this._retriesCount >= 15) {
