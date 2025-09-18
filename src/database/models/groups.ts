@@ -1,89 +1,52 @@
 import type { GroupMetadata, GroupParticipant } from 'baileys';
-import sql from '../db';
+import { db } from '../db';
 import { reviveBuffer, transformBuffer } from '../utils';
 
 export abstract class GroupTable {
-	public static upsert(id: string, deviceId: string, data: object) {
-		return sql`INSERT INTO groups (id, device_id, data)
-      VALUES
-        (${id}, ${deviceId}, ${transformBuffer(data)})
-      ON CONFLICT (id, device_id)
-      DO UPDATE SET
-        data = groups.data || EXCLUDED.data,
-        updated_at = NOW();`;
-	}
+  public static upsert(id: string, deviceId: string, data: GroupMetadata): Promise<void> {
+    return db.groups.upsert(id, deviceId, transformBuffer(data));
+  }
 
-	public static async get(id: string, deviceId: string) {
-		const results = await sql`
-      SELECT data FROM groups
-      WHERE id = ${id} AND device_id = ${deviceId}
-    `;
+  public static async get(id: string, deviceId: string): Promise<GroupMetadata | null> {
+    const results = await db.groups.get(id, deviceId);
 
-		if (!results) {
-			return null;
-		}
+    if (!results) {
+      return null;
+    }
 
-		if (results.length === 0) {
-			return null;
-		}
+    if (results.length === 0) {
+      return null;
+    }
 
-		if (!results?.[0].data) {
-			return null;
-		}
+    if (!results[0] || !results[0].data) {
+      return null;
+    }
 
-		return reviveBuffer(results[0].data) as GroupMetadata;
-	}
+    return reviveBuffer<GroupMetadata>(results[0].data);
+  }
 
-	public static async addParticipants(
-		id: string,
-		deviceId: string,
-		participants: GroupParticipant[],
-	) {
-		return sql`UPDATE groups
-      SET
-        data = jsonb_set(
-          data,
-          '{participants}',
-          (data->'participants') || ${participants},
-          true
-        ),
-        updated_at = NOW()
-      WHERE id = ${id} AND device_id = ${deviceId}`;
-	}
+  public static async addParticipants(
+    id: string,
+    deviceId: string,
+    participants: GroupParticipant[],
+  ): Promise<void> {
+    return db.groups.addParticipants(id, deviceId, participants);
+  }
 
-	public static async removeParticipants(
-		id: string,
-		deviceId: string,
-		participants: string[],
-	) {
-		return sql`UPDATE groups
-      SET
-        data = jsonb_set(
-          data,
-          '{participants}',
-          (
-              SELECT
-                  jsonb_agg(participant_object)
-              FROM
-                  jsonb_array_elements(data->'participants') AS participant_object
-              WHERE
-                  (participant_object->>'id') NOT IN (${sql(participants)})
-          )
-        ),
-        updated_at = NOW()
-      WHERE id = ${id} AND device_id = ${deviceId}
-    `;
-	}
+  public static async removeParticipants(
+    id: string,
+    deviceId: string,
+    participants: string[],
+  ): Promise<void> {
+    return db.groups.removeParticipants(id, deviceId, participants);
+  }
 
-	public static async getAll(deviceId: string) {
-		const data = await sql<
-			{ data: GroupMetadata }[]
-		>`SELECT data FROM groups WHERE device_id = ${deviceId}`;
+  public static async getAll(deviceId: string): Promise<GroupMetadata[]> {
+    const results = await db.groups.getAll(deviceId);
+    return results.map((item) => reviveBuffer(item.data));
+  }
 
-		return data.map((item) => item.data);
-	}
-
-	public static async clear(deviceId: string) {
-		await sql`DELETE FROM groups WHERE device_id = ${deviceId}`;
-	}
+  public static async clear(deviceId: string): Promise<void> {
+    return db.groups.clear(deviceId);
+  }
 }

@@ -3,11 +3,12 @@ import {
   getDevice,
   isRealMessage,
   normalizeMessageContent,
-  type proto,
+  proto,
   type WAMessage,
 } from 'baileys';
-import sql from '../db';
+import { db } from '../db';
 import { reviveBuffer, transformBuffer } from '../utils';
+import { extractText } from '../utils/extract-text';
 
 export interface IMessage {
   id: string;
@@ -19,26 +20,13 @@ export interface IMessage {
   created_at: Date;
 }
 
-const extractText = (message: Partial<WAMessage>): string | null => {
-  const normalizedMessage = normalizeMessageContent(message.message);
-
-  return (
-    normalizedMessage?.conversation ||
-    normalizedMessage?.extendedTextMessage?.text ||
-    normalizedMessage?.imageMessage?.caption ||
-    normalizedMessage?.documentMessage?.caption ||
-    normalizedMessage?.videoMessage?.caption ||
-    null
-  );
-};
-
 export abstract class MessageTable {
   public static async upsert(
     id: string,
     remoteJid: string,
     deviceId: string,
     data: WAMessage
-  ) {
+  ): Promise<void> {
     const fromMe = data.key.fromMe || false;
     const isRealMsg = isRealMessage(data, deviceId);
     const text = extractText(data);
@@ -46,17 +34,16 @@ export abstract class MessageTable {
     const device = getDevice(id);
 
     const buffer = transformBuffer(data);
-
-    return await sql`INSERT INTO messages
-      (id, device_id, remote_jid, from_me, type, device, is_real_message, text, data)
-	  VALUES
-		  (${id}, ${deviceId}, ${remoteJid}, ${fromMe}, ${type}, ${device}, ${isRealMsg}, ${text}, ${buffer})
-	  ON CONFLICT (id, device_id)
-	  DO UPDATE SET
-		data = messages.data || EXCLUDED.data,
-		text = COALESCE(EXCLUDED.text, messages.text),
-		updated_at = NOW();
-	`;
+    return db.messages.upsert(id,
+      deviceId,
+      remoteJid,
+      fromMe,
+      type,
+      device,
+      isRealMsg ?? false,
+      text,
+      buffer
+    );
   }
 
   public static async updateMessage(
@@ -64,7 +51,7 @@ export abstract class MessageTable {
     remoteJid: string,
     deviceId: string,
     update: Partial<WAMessage>
-  ) {
+  ): Promise<void> {
     const message = normalizeMessageContent(update.message);
     const text = extractText(update);
 
@@ -72,19 +59,7 @@ export abstract class MessageTable {
       return;
     }
 
-    return await sql`UPDATE messages
-      SET
-        data = jsonb_set(
-          data,
-          '{message}',
-          (data->'message') || ${transformBuffer(message)},
-          true
-        ),
-        text = COALESCE(${text}, messages.text),
-        updated_at = NOW()
-      WHERE
-        id = ${id} AND device_id = ${deviceId} AND remote_jid = ${remoteJid};
-    `;
+    return db.messages.updateMessage(id, remoteJid, deviceId, text, transformBuffer(message));
   }
 
   public static async addReactions(
@@ -92,35 +67,16 @@ export abstract class MessageTable {
     remoteJid: string,
     deviceId: string,
     data: proto.IReaction
-  ) {
+  ): Promise<void> {
     const reaction = transformBuffer(data);
     const reactions = {
       reactions: [reaction],
     };
-
-    return await sql`UPDATE messages
-      SET
-        data = CASE
-          WHEN data ? 'reactions' THEN
-            jsonb_set(
-              data,
-              '{reactions}',
-              (data -> 'reactions') || ${reaction}
-            )
-          ELSE
-            data || ${reactions}
-        END,
-        updated_at = NOW()
-      WHERE
-        id = ${id} AND device_id = ${deviceId} AND remote_jid = ${remoteJid};
-    `;
+    return db.messages.addReactions(id, remoteJid, deviceId, reaction, reactions);
   }
 
-  public static async get(id: string, remoteJid: string, deviceId: string) {
-    const results = await sql`SELECT data FROM messages
-      WHERE id = ${id} AND device_id = ${deviceId} AND remote_jid = ${remoteJid}
-      LIMIT 1;
-    `;
+  public static async get(id: string, remoteJid: string, deviceId: string): Promise<WAMessage | null> {
+    const results = await db.messages.get(id, remoteJid, deviceId);
 
     if (!results) {
       return null;
@@ -130,11 +86,11 @@ export abstract class MessageTable {
       return null;
     }
 
-    if (!results?.[0].data) {
+    if (!results[0] || !results[0].data) {
       return null;
     }
 
-    return reviveBuffer(results[0].data) as WAMessage;
+    return reviveBuffer(results[0].data);
   }
 
   public static async getAll(
@@ -143,24 +99,17 @@ export abstract class MessageTable {
     realMessage: boolean = true,
     limit = 10,
     page = 1
-  ) {
-    const data =
-      await sql`SELECT id, remote_jid, COALESCE((data ->> 'status')::integer, 0) AS status, device_id, type, text, created_at FROM messages
-      WHERE device_id = ${device_id}
-      -- AND from_me = ${fromMe}
-      AND is_real_message = ${realMessage}
-      ORDER BY created_at DESC
-      LIMIT ${limit} OFFSET ${(page - 1) * limit};
-    `;
-
-    if (!data) {
-      return [];
-    }
-
-    return data as IMessage[];
+  ): Promise<IMessage[]> {
+    return db.messages.getAll(
+      device_id,
+      fromMe,
+      realMessage,
+      limit,
+      page
+    );
   }
 
   public static async clear(deviceId: string) {
-    await sql`DELETE FROM messages WHERE device_id = ${deviceId}`;
+    return db.messages.clear(deviceId);
   }
 }
