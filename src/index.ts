@@ -1,11 +1,11 @@
-import { runMigration, sql } from './database';
+import { sql, db } from './database';
 import { server } from './server';
 import { sendWebhook } from './server/webhook';
 import { WaStore } from './whatsapp';
 
-if (sql.options.adapter !== 'postgres') {
-  throw new Error('Only postgres is supported');
-}
+// if (sql.options.adapter !== 'postgres') {
+//   throw new Error('Only postgres is supported');
+// }
 
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -36,7 +36,7 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 const main = async () => {
-  await runMigration();
+  await db.runMigration();
   server.listen({ port, hostname, reusePort: false }, (app) => {
     console.log(`Server running at http://${app.hostname}:${app.port}`);
   });
