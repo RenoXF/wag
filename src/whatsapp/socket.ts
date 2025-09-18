@@ -195,12 +195,15 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					DisconnectReason.connectionLost,
           DisconnectReason.connectionClosed,
           DisconnectReason.unavailableService,
+          DisconnectReason.connectionReplaced,
+          DisconnectReason.timedOut,
 				];
 
 				const loggedOutCodes = [
 					DisconnectReason.badSession,
 					DisconnectReason.loggedOut,
 					DisconnectReason.multideviceMismatch,
+          DisconnectReason.forbidden,
 					406, // Banned
 					402, // Temp banned
 					405, // Client too old
