@@ -17,6 +17,7 @@ for (const platform of platforms) {
     outdir: './out',
     compile: platform,
     minify: true,
+    target: 'bun',
     define: {
       'BUILD_VERSION': version,
       'NODE_ENV': 'production',
