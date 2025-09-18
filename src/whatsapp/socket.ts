@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import NodeCache from '@cacheable/node-cache';
+import { NodeCache } from '@cacheable/node-cache';
 import type { Boom } from '@hapi/boom';
 import makeWASocket, {
 	type AnyMessageContent,
