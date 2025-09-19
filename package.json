@@ -18,7 +18,8 @@
 	"scripts": {
 		"format": "biome check --write",
 		"start": "NODE_ENV=production bun src/index.ts",
-		"bundle": "bun ./scripts/build.ts"
+    "typecheck": "tsc --noEmit",
+		"bundle": "bun typecheck &&  bun ./scripts/build.ts"
 	},
 	"dependencies": {
 		"@elysiajs/eden": "^1.4.1",
