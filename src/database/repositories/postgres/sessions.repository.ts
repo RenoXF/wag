@@ -1,5 +1,6 @@
 import type { SQL } from "bun";
 import type { ISessionsRepository } from "../interfaces";
+import type { AuthenticationCreds } from "baileys";
 
 export class PostgresSessionRepository implements ISessionsRepository {
   constructor(private sql: SQL) {
@@ -30,8 +31,8 @@ export class PostgresSessionRepository implements ISessionsRepository {
     `;
   }
 
-  public async get(id: string, deviceId: string): Promise<{ data: object }[]> {
-    const results = await this.sql<{ data: object }[]>`
+  public async get(id: string, deviceId: string): Promise<{ data: AuthenticationCreds }[]> {
+    const results = await this.sql<{ data: AuthenticationCreds }[]>`
       SELECT data FROM sessions
       WHERE id = ${id} AND device_id = ${deviceId}
     `;
