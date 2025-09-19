@@ -3,15 +3,15 @@ import { Slot } from "@radix-ui/react-slot";
 import * as React from "react";
 import {
   Controller,
-  ControllerProps,
-  FieldPath,
-  FieldValues,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
   FormProvider,
   useFormContext,
   useFormState,
 } from "react-hook-form";
 
-import { Label } from "@/components/ui/label";
+import { Label } from "@/server/client/components/ui/label";
 import { cn } from "@/server/client/lib/utils";
 
 const Form = FormProvider;
