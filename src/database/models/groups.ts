@@ -3,7 +3,7 @@ import { db } from '../db';
 import { reviveBuffer, transformBuffer } from '../utils';
 
 export abstract class GroupTable {
-  public static upsert(id: string, deviceId: string, data: GroupMetadata): Promise<void> {
+  public static upsert(id: string, deviceId: string, data: Partial<GroupMetadata>): Promise<void> {
     return db.groups.upsert(id, deviceId, transformBuffer(data));
   }
 

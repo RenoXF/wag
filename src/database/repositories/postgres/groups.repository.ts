@@ -6,7 +6,7 @@ export class PostgresGroupsRepository implements IGroupsRepository {
   constructor(private sql: SQL) {
   }
 
-  public upsert(id: string, deviceId: string, data: GroupMetadata): Promise<void> {
+  public upsert(id: string, deviceId: string, data: Partial<GroupMetadata>): Promise<void> {
     return this.sql`INSERT INTO groups (id, device_id, data)
       VALUES
         (${id}, ${deviceId}, ${data})
