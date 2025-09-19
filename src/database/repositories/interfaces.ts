@@ -1,4 +1,4 @@
-import type { Contact, GroupMetadata, GroupParticipant, proto, WAMessage } from 'baileys';
+import type { AuthenticationCreds, Contact, GroupMetadata, GroupParticipant, proto, WAMessage } from 'baileys';
 import type { IMessage } from '../models';
 
 export interface IDatabaseService {
@@ -17,7 +17,7 @@ export interface IContactsRepository {
 }
 
 export interface IGroupsRepository {
-  upsert(id: string, deviceId: string, data: GroupMetadata): Promise<void>;
+  upsert(id: string, deviceId: string, data: Partial<GroupMetadata>): Promise<void>;
   get(id: string, deviceId: string): Promise<{ data: GroupMetadata }[]>;
   addParticipants(
     id: string,
@@ -66,5 +66,5 @@ export interface ISessionsRepository {
   upsert(id: string, deviceId: string, data: unknown): Promise<void>;
   delete(id: string, deviceId: string): Promise<void>;
   clear(deviceId: string): Promise<void>;
-  get(id: string, deviceId: string): Promise<{ data: object }[]>;
+  get(id: string, deviceId: string): Promise<{ data: AuthenticationCreds }[]>;
 }
