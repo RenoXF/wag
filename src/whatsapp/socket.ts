@@ -70,7 +70,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	constructor(public readonly deviceId: string, public readonly webhookUrl?: string | null) {
 		super();
 		this.logger = P({
-      level: 'error',
+      level: process.env.NODE_ENV === 'production' ? 'error' : 'trace',
       formatters: {
         log(object) {
           const date = new Intl.DateTimeFormat('sv-SE', {
@@ -200,22 +200,26 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				const statusMsg = ((lastDisconnect?.error as Boom)?.message ?? '').toLowerCase();
 
 				if (statusMsg.includes('qr refs attempts ended')) {
-          // console.log('QR attempts ended');
+          console.log('QR attempts ended');
 					this._cleanup(false, statusMsg, clearCreds);
 					return;
 				}
 
 				if (statusMsg.includes('proxy connection timed out')) {
-					// console.log('Proxy connection timed out');
+					console.log('Proxy connection timed out');
 					this._cleanup(false, statusMsg, clearCreds);
 					return;
 				}
 
         if (statusMsg.includes('websocket error') && statusMsg.includes('failed to connect')) {
-          this._cleanup(true, statusMsg);
-          return this.connect().catch((err) => {
-						this.emit('error', err);
-					});
+          console.log('Failed to connect to whatsapp websocket,')
+
+          return Bun.sleep(3000).then(() => {
+            this._cleanup(true, statusMsg);
+            return this.connect().catch((err) => {
+              this.emit('error', err);
+            });
+          });
         }
 
 				const restartedCodes = [
