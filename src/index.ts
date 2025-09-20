@@ -3,10 +3,6 @@ import { server } from './server';
 import { sendWebhook } from './server/webhook';
 import { WaStore } from './whatsapp';
 
-// if (sql.options.adapter !== 'postgres') {
-//   throw new Error('Only postgres is supported');
-// }
-
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 const shutdown = async (code: string) => {
