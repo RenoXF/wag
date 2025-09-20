@@ -25,6 +25,7 @@ import PQueue from 'p-queue';
 import P from 'pino';
 import { ContactTable, GroupTable, MessageTable } from '../database/models';
 import { useStorage } from './storage';
+import { version } from '../../package.json'
 
 export type WhatsappAuth = {
 	via: 'qr_code' | 'pair_code';
@@ -68,7 +69,27 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 	constructor(public readonly deviceId: string, public readonly webhookUrl?: string | null) {
 		super();
-		this.logger = P({ level: 'error' }).child({ deviceId });
+		this.logger = P({
+      level: 'error',
+      formatters: {
+        log(object) {
+          const date = new Intl.DateTimeFormat('sv-SE', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+            timeZone: 'Asia/Jakarta',
+          }).format(new Date());
+          return { ...object, date };
+        },
+      },
+    }).child({
+      deviceId,
+      version: version,
+    });
 	}
 
 	public get user() {
