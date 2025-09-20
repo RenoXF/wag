@@ -176,19 +176,26 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 			if (connection === 'close') {
 				const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-				const statusMsg = (lastDisconnect?.error as Boom)?.message ?? '';
+				const statusMsg = ((lastDisconnect?.error as Boom)?.message ?? '').toLowerCase();
 
-				if (statusMsg.toLowerCase().includes('qr refs attempts ended')) {
+				if (statusMsg.includes('qr refs attempts ended')) {
           // console.log('QR attempts ended');
 					this._cleanup(false, statusMsg, clearCreds);
 					return;
 				}
 
-				if (statusMsg.toLowerCase().includes('proxy connection timed out')) {
+				if (statusMsg.includes('proxy connection timed out')) {
 					// console.log('Proxy connection timed out');
 					this._cleanup(false, statusMsg, clearCreds);
 					return;
 				}
+
+        if (statusMsg.includes('websocket error') && statusMsg.includes('failed to connect')) {
+          this._cleanup(true, statusMsg);
+          return this.connect().catch((err) => {
+						this.emit('error', err);
+					});
+        }
 
 				const restartedCodes = [
 					DisconnectReason.restartRequired,
