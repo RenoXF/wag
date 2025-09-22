@@ -32,7 +32,7 @@
 		"bun-plugin-tailwind": "^0.0.15",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"elysia": "^1.4.6",
+		"elysia": "^1.4.7",
 		"jimp": "^1.6.0",
 		"link-preview-js": "^3.1.0",
 		"lucide-react": "^0.544.0",
