@@ -1,7 +1,8 @@
 import { sql, db } from './database';
 import { server } from './server';
+import { Connection } from './server/connections/service';
 import { sendWebhook } from './server/webhook';
-import { WaSocket, WaStore } from './whatsapp';
+import { WaStore } from './whatsapp';
 
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -32,16 +33,20 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 const restoreDevices = async () => {
-  const existingDevices = await db.sessions.getAllDeviceIds();
-  for (const deviceId of existingDevices) {
-    if (WaStore.has(deviceId)) {
-      continue;
-    }
+  const existingDevices = await db.devices.getAll();
+  for (const row of existingDevices) {
+    console.log(`Restoring device: ${row.id}`);
+    await Connection.start({
+      deviceId: row.id,
+      webhookUrl: row.webhook_url || undefined,
+      name: row.name || undefined,
+      description: row.description || undefined,
+      browser: row.browser || undefined,
+      os: row.os || undefined,
+      version: row.version || undefined,
+    });
 
-    console.log(`Restoring device: ${deviceId}`);
-    const socket = new WaSocket(deviceId);
-    socket.connect();
-    WaStore.set(deviceId, socket);
+    await Bun.sleep(300);
   }
 }
 
