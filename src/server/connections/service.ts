@@ -3,6 +3,7 @@ import { WaSocket, WaStore, type WhatsappAuth } from '../../whatsapp';
 import type { ConnectionModel } from './model';
 import { queue } from '../queue';
 import { sendWebhook } from '../webhook';
+import { DeviceTable } from '@/database/models/devices';
 
 export type IConnection = {
   deviceId: string;
@@ -21,7 +22,7 @@ export type IConnection = {
 };
 
 export abstract class Connection {
-  public static async start({ deviceId, webhookUrl }: ConnectionModel.Start) {
+  public static async start({ deviceId, webhookUrl, name, description, browser, os, version }: ConnectionModel.Start) {
     if (WaStore.has(deviceId)) {
       return;
     }
@@ -29,22 +30,38 @@ export abstract class Connection {
     const whQueue = queue.add(deviceId);
     const socket = new WaSocket(deviceId, webhookUrl);
 
-    socket.on('auth', (auth) => {
+    socket.on('auth', async (auth) => {
       // console.log('Authenticated:', auth);
+      if (auth.via === 'qr_code') {
+        await DeviceTable.upsert(deviceId, {
+          qr_string: auth.data,
+        });
+      } else if (auth.via === 'pair_code') {
+        await DeviceTable.upsert(deviceId, {
+          qr_string: null,
+          pair_code: auth.data,
+        });
+      }
       whQueue.add(() => sendWebhook({
         event: 'auth',
         data: { auth }
       }, webhookUrl));
     });
 
-    socket.on('ready', () => {
-      // console.log('Socket is ready');
+    socket.on('ready', async () => {
+      await DeviceTable.upsert(deviceId, {
+        qr_string: null,
+        pair_code: null,
+        connection_state: 'open',
+      });
       whQueue.add(() => sendWebhook({ event: 'ready', data: {} }, webhookUrl));
       WaStore.set(deviceId, socket);
     });
 
-    socket.on('state', (state) => {
-      // console.log('Connection state:', state);
+    socket.on('state', async (state) => {
+      await DeviceTable.upsert(deviceId, {
+        connection_state: state,
+      })
       whQueue.add(() => sendWebhook({ event: 'state', data: { state } }, webhookUrl));
     });
 
@@ -56,7 +73,20 @@ export abstract class Connection {
       whQueue.clear();
       await sendWebhook({ event: 'close', data: { reason, isRestart } }, webhookUrl)
       WaStore.delete(deviceId);
+      await DeviceTable.upsert(deviceId, {
+        connection_state: 'close',
+      });
     });
+
+    await DeviceTable.upsert(deviceId, {
+      webhook_url: webhookUrl || undefined,
+      name: name || undefined,
+      description: description || undefined,
+      browser: browser || undefined,
+      os: os || undefined,
+      version: version || undefined,
+      connection_state: 'connecting',
+    })
 
     socket.connect();
 
