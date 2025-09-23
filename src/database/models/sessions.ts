@@ -32,4 +32,8 @@ export abstract class SessionTable {
 
     return reviveBuffer(results[0].data);
   }
+
+  public static async getAllDeviceIds(): Promise<string[]> {
+    return db.sessions.getAllDeviceIds();
+  }
 }

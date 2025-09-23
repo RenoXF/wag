@@ -67,4 +67,5 @@ export interface ISessionsRepository {
   delete(id: string, deviceId: string): Promise<void>;
   clear(deviceId: string): Promise<void>;
   get(id: string, deviceId: string): Promise<{ data: AuthenticationCreds }[]>;
+  getAllDeviceIds(): Promise<string[]>;
 }

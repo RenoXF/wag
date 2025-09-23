@@ -39,4 +39,11 @@ export class PostgresSessionRepository implements ISessionsRepository {
 
     return results;
   }
+
+  public async getAllDeviceIds(): Promise<string[]> {
+    const results = await this.sql<{ device_id: string }[]>`
+      SELECT DISTINCT device_id FROM sessions
+    `;
+    return results.map(row => row.device_id);
+  }
 }
