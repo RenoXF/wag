@@ -67,5 +67,30 @@ export interface ISessionsRepository {
   delete(id: string, deviceId: string): Promise<void>;
   clear(deviceId: string): Promise<void>;
   get(id: string, deviceId: string): Promise<{ data: AuthenticationCreds }[]>;
-  getAllDeviceIds(): Promise<string[]>;
+}
+
+export interface IDeviceParams {
+  name?: string | null;
+  description?: string | null;
+  browser?: string | null;
+  os?: string | null;
+  version?: string | null;
+  connection_state?: 'open' | 'close' | 'connecting';
+  webhook_url?: string | null;
+  qr_string?: string | null;
+  pair_code?: string | null;
+}
+
+export type IDevice = {
+  id: string
+  created_at: string;
+  updated_at: string;
+}  & IDeviceParams
+
+export interface IDevicesRepository {
+  upsert(id: string, data: IDeviceParams): Promise<void>;
+  get(id: string): Promise<IDevice | null>;
+  getAll(): Promise<IDevice[]>;
+  delete(id: string): Promise<void>;
+  clear(): Promise<void>;
 }

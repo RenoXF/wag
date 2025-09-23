@@ -2,13 +2,15 @@ import type { SQL, TransactionSQL } from "bun";
 import { BaseDatabaseService } from "../base.service";
 import { PostgresContactsRepository } from "./contacts.repository";
 import { PostgresGroupsRepository } from "./groups.repository";
-import type { IContactsRepository, IGroupsRepository, IMessagesRepository, ISessionsRepository } from "../interfaces";
+import type { IContactsRepository, IDevicesRepository, IGroupsRepository, IMessagesRepository, ISessionsRepository } from "../interfaces";
 import { PostgresMessagesRepository } from "./messages.repository";
 import { PostgresSessionRepository } from "./sessions.repository";
+import { PostgresDevicesRepository } from "./devices.repository";
 
 export class PostgresDatabaseService extends BaseDatabaseService {
 
   public override contacts: IContactsRepository;
+  public override devices: IDevicesRepository;
   public override groups: IGroupsRepository;
   public override messages: IMessagesRepository;
   public override sessions: ISessionsRepository;
@@ -16,6 +18,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
   constructor(db: SQL) {
     super(db);
     this.contacts = new PostgresContactsRepository(db);
+    this.devices = new PostgresDevicesRepository(db);
     this.groups = new PostgresGroupsRepository(db);
     this.messages = new PostgresMessagesRepository(db);
     this.sessions = new PostgresSessionRepository(db);
@@ -23,12 +26,13 @@ export class PostgresDatabaseService extends BaseDatabaseService {
   protected async runMigrationQueries(tx: TransactionSQL): Promise<void> {
     await tx`CREATE TABLE IF NOT EXISTS "devices" (
       "id" varchar(26) NOT NULL PRIMARY KEY,
-      "name" text NOT NULL,
+      "name" text,
       "description" text,
       "browser" text,
       "os" text,
       "version" text,
       "connection_state" text DEFAULT 'close',
+      "webhook_url" text,
       "qr_string" text,
       "pair_code" text,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
