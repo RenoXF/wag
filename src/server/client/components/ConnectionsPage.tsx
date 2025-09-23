@@ -42,13 +42,13 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
   }, []);
 
   // Auto-refresh every 3 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchConnections();
-    }, 3000);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     fetchConnections();
+  //   }, 3000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const fetchConnections = async () => {
     try {
