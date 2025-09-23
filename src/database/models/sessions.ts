@@ -1,6 +1,7 @@
 import type { AuthenticationCreds } from 'baileys';
 import { db } from '../db';
 import { reviveBuffer, transformBuffer } from '../utils';
+import { DeviceTable } from './devices';
 
 export abstract class SessionTable {
 	public static upsert(id: string, deviceId: string, data: unknown): Promise<void> {
@@ -11,8 +12,9 @@ export abstract class SessionTable {
 		return db.sessions.delete(id, deviceId);
 	}
 
-	public static clear(deviceId: string): Promise<void> {
-		return db.sessions.clear(deviceId);
+	public static async clear(deviceId: string): Promise<void> {
+		await db.sessions.clear(deviceId);
+    await DeviceTable.delete(deviceId);
 	}
 
 	public static async get(id: string, deviceId: string): Promise<AuthenticationCreds | null> {
@@ -31,9 +33,5 @@ export abstract class SessionTable {
     }
 
     return reviveBuffer(results[0].data);
-  }
-
-  public static async getAllDeviceIds(): Promise<string[]> {
-    return db.sessions.getAllDeviceIds();
   }
 }
