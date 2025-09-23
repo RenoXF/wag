@@ -1,7 +1,7 @@
 import { sql, db } from './database';
 import { server } from './server';
 import { sendWebhook } from './server/webhook';
-import { WaStore } from './whatsapp';
+import { WaSocket, WaStore } from './whatsapp';
 
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -31,8 +31,23 @@ const shutdown = async (code: string) => {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
+const restoreDevices = async () => {
+  const existingDevices = await db.sessions.getAllDeviceIds();
+  for (const deviceId of existingDevices) {
+    if (WaStore.has(deviceId)) {
+      continue;
+    }
+
+    console.log(`Restoring device: ${deviceId}`);
+    const socket = new WaSocket(deviceId);
+    socket.connect();
+    WaStore.set(deviceId, socket);
+  }
+}
+
 const main = async () => {
   await db.runMigration();
+  setTimeout(restoreDevices, 3000);
   server.listen({ port, hostname, reusePort: false }, (app) => {
     console.log(`Server running at http://${app.hostname}:${app.port}`);
   });
