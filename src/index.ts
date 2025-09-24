@@ -21,6 +21,11 @@ const shutdown = async (code: string) => {
       webhookUrl
     );
   }
+  await db.devices.updateAll({
+    connection_state: 'close',
+    qr_string: null,
+    pair_code: null,
+  })
   console.log('Shutting down database connection...');
   await sql.end();
 
