@@ -26,6 +26,7 @@ import P from 'pino';
 import { ContactTable, GroupTable, MessageTable } from '../database/models';
 import { useStorage } from './storage';
 import { version } from '../../package.json'
+import { traceSentry } from '@/instrument';
 
 export type WhatsappAuth = {
 	via: 'qr_code' | 'pair_code';
@@ -274,6 +275,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
           if (this._socket) {
             this._socket.sendPresenceUpdate('available')
               .catch((err) => {
+                traceSentry(err, {
+                  data: {
+                    presence: 'available',
+                  },
+                });
                 console.error('Failed to send initial presence update:', err);
               });
           }
@@ -481,6 +487,13 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					}
           return Promise.reject('Failed to send message: Unknown error');
 				} catch (error) {
+          traceSentry(error, {
+            data: {
+              jid: jid,
+              content,
+              options,
+            },
+          });
 					return Promise.reject(`Failed to send message: ${error}`);
 				}
 			},
@@ -502,6 +515,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					'error',
 					new Error('Failed to fetch group metadata', { cause: err }),
 				);
+        traceSentry(err);
 				return false;
 			}
 		});
