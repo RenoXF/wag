@@ -46,4 +46,20 @@ export class PostgresDevicesRepository implements IDevicesRepository {
   public clear(): Promise<void> {
     return this.sql`DELETE FROM devices`;
   }
+
+  public updateAll(data: IDeviceParams): Promise<void> {
+    return this.sql`
+      UPDATE devices SET
+        name = ${data.name},
+        description = ${data.description},
+        browser = ${data.browser},
+        os = ${data.os},
+        version = ${data.version},
+        connection_state = ${data.connection_state},
+        webhook_url = ${data.webhook_url},
+        qr_string = ${data.qr_string},
+        pair_code = ${data.pair_code},
+        updated_at = NOW()
+    `;
+  }
 }

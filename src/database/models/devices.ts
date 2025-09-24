@@ -21,4 +21,8 @@ export abstract class DeviceTable {
   static async clear(): Promise<void> {
     return db.devices.clear();
   }
+
+  static async updateAll(data: IDeviceParams): Promise<void> {
+    return db.devices.updateAll(data);
+  }
 }

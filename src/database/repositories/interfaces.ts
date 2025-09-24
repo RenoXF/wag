@@ -93,4 +93,5 @@ export interface IDevicesRepository {
   getAll(): Promise<IDevice[]>;
   delete(id: string): Promise<void>;
   clear(): Promise<void>;
+  updateAll(data: IDeviceParams): Promise<void>;
 }
