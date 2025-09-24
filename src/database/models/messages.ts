@@ -9,6 +9,7 @@ import {
 import { db } from '../db';
 import { reviveBuffer, transformBuffer } from '../utils';
 import { extractText } from '../utils/extract-text';
+import { traceSentry } from '@/instrument';
 
 export interface IMessage {
   id: string;
@@ -43,7 +44,10 @@ export abstract class MessageTable {
       isRealMsg ?? false,
       text,
       buffer
-    );
+    ).catch((err) => {
+      traceSentry(err);
+      throw err;
+    });
   }
 
   public static async updateMessage(
@@ -59,7 +63,11 @@ export abstract class MessageTable {
       return;
     }
 
-    return db.messages.updateMessage(id, remoteJid, deviceId, text, transformBuffer(message));
+    return db.messages.updateMessage(id, remoteJid, deviceId, text, transformBuffer(message))
+      .catch((err) => {
+        traceSentry(err);
+        throw err;
+      });
   }
 
   public static async addReactions(
@@ -72,11 +80,19 @@ export abstract class MessageTable {
     const reactions = {
       reactions: [reaction],
     };
-    return db.messages.addReactions(id, remoteJid, deviceId, reaction, reactions);
+    return db.messages.addReactions(id, remoteJid, deviceId, reaction, reactions)
+      .catch((err) => {
+        traceSentry(err);
+        throw err;
+      });
   }
 
   public static async get(id: string, remoteJid: string, deviceId: string): Promise<WAMessage | null> {
-    const results = await db.messages.get(id, remoteJid, deviceId);
+    const results = await db.messages.get(id, remoteJid, deviceId)
+      .catch((err) => {
+        traceSentry(err);
+        throw err;
+      });
 
     if (!results) {
       return null;
@@ -106,10 +122,18 @@ export abstract class MessageTable {
       realMessage,
       limit,
       page
-    );
+    )
+      .catch((err) => {
+        traceSentry(err);
+        throw err;
+      });
   }
 
   public static async clear(deviceId: string) {
-    return db.messages.clear(deviceId);
+    return db.messages.clear(deviceId)
+      .catch((err) => {
+        traceSentry(err);
+        throw err;
+      });
   }
 }

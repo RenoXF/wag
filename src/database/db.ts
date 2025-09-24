@@ -1,5 +1,6 @@
 import { SQL } from 'bun';
 import { PostgresDatabaseService } from './repositories/postgres/service';
+import { traceSentry } from '@/instrument';
 
 export const sql = new SQL({
   idleTimeout: 300,
@@ -10,6 +11,7 @@ export const sql = new SQL({
 try {
   await sql.connect();
 } catch (error) {
+  traceSentry(error);
   if (error instanceof Error) {
     console.error('Failed to connect to the database:', error.message);
   } else {
