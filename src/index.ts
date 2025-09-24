@@ -1,3 +1,4 @@
+import './instrument';
 import { sql, db } from './database';
 import { server } from './server';
 import { Connection } from './server/connections/service';
