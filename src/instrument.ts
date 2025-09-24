@@ -3,6 +3,7 @@ declare const SENTRY_DSN: string;
 
 const sentryDsn = Bun.env.SENTRY_DSN ?? SENTRY_DSN;
 if (sentryDsn) {
+  console.log("Initializing Sentry");
   Sentry.init({
     dsn: sentryDsn,
     sendDefaultPii: true,
