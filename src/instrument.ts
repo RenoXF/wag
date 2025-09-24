@@ -13,3 +13,8 @@ if (sentryDsn) {
   });
 }
 
+export const traceSentry = (e:unknown, hint?: Sentry.EventHint) => {
+  if (sentryDsn) {
+    Sentry.captureException(e, hint);
+  }
+}
