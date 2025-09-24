@@ -35,11 +35,14 @@ export abstract class Connection {
       if (auth.via === 'qr_code') {
         await DeviceTable.upsert(deviceId, {
           qr_string: auth.data,
+          pair_code: null,
+          connection_state: 'connecting'
         });
       } else if (auth.via === 'pair_code') {
         await DeviceTable.upsert(deviceId, {
           qr_string: null,
           pair_code: auth.data,
+          connection_state: 'connecting'
         });
       }
       whQueue.add(() => sendWebhook({

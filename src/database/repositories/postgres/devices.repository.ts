@@ -1,14 +1,19 @@
 import type { SQL } from 'bun';
-import type { IContactsRepository, IDevice, IDeviceParams, IDevicesRepository } from '../interfaces';
+import type { IDevice, IDeviceParams, IDevicesRepository } from '../interfaces';
 
 export class PostgresDevicesRepository implements IDevicesRepository {
   constructor(private sql: SQL) {
   }
 
   public upsert(id: string, device: IDeviceParams): Promise<void> {
+    const insertedData = {
+      id: id,
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...device,
+    };
     return this.sql`
-      INSERT INTO devices (id, name, description, browser, os, version, connection_state, webhook_url, qr_string, pair_code, created_at, updated_at)
-      VALUES (${id}, ${device.name}, ${device.description}, ${device.browser}, ${device.os}, ${device.version}, ${device.connection_state}, ${device.webhook_url}, ${device.qr_string}, ${device.pair_code}, NOW(), NOW())
+      INSERT INTO devices ${this.sql(insertedData)}
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
@@ -48,18 +53,12 @@ export class PostgresDevicesRepository implements IDevicesRepository {
   }
 
   public updateAll(data: IDeviceParams): Promise<void> {
+    const updatedData = {
+      ...data,
+      updated_at: new Date(),
+    };
     return this.sql`
-      UPDATE devices SET
-        name = ${data.name},
-        description = ${data.description},
-        browser = ${data.browser},
-        os = ${data.os},
-        version = ${data.version},
-        connection_state = ${data.connection_state},
-        webhook_url = ${data.webhook_url},
-        qr_string = ${data.qr_string},
-        pair_code = ${data.pair_code},
-        updated_at = NOW()
+      UPDATE devices SET ${this.sql(updatedData)}
     `;
   }
 }
