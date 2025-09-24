@@ -10,6 +10,15 @@ const platforms: Bun.CompileBuildOptions[] = [
   // { target: 'bun-darwin-arm64', outfile: 'wag-macos' },
 ];
 
+let define: Record<string, string> = {
+  'BUILD_VERSION': version,
+  'BUILD_TIME': `"${new Date().toISOString()}"`
+}
+
+if (process.env.SENTRY_DSN) {
+  define['SENTRY_DSN'] = `"${process.env.SENTRY_DSN}"`;
+}
+
 for (const platform of platforms) {
   const startTime = Date.now();
   await Bun.build({
@@ -18,11 +27,7 @@ for (const platform of platforms) {
     compile: platform,
     minify: true,
     target: 'bun',
-    define: {
-      'BUILD_VERSION': version,
-      'NODE_ENV': 'production',
-      'TZ': 'Asia/Jakarta',
-    }
+    define: define,
   });
 
   const endTime = Date.now();
