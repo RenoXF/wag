@@ -8,11 +8,28 @@ export class PostgresContactsRepository implements IContactsRepository {
 
   async upsert(deviceId: string, data: Contact): Promise<void> {
     const insertedData = {
+      id: data.id,
+      lid: data.lid,
+      device_id: deviceId,
+      phone_number: data.phoneNumber,
+      name: data.name,
+      notify: data.notify,
+      verified_name: data.verifiedName,
+      img_url: data.imgUrl,
+      status: data.status,
       created_at: new Date(),
       updated_at: new Date(),
-      ...data,
     }
-    await this.sql`INSERT INTO contacts ${this.sql(insertedData)};`;
+    await this.sql`INSERT INTO contacts ${this.sql(insertedData)}
+      ON CONFLICT (id, device_id) DO UPDATE SET
+        lid = EXCLUDED.lid,
+        phone_number = EXCLUDED.phone_number,
+        name = EXCLUDED.name,
+        notify = EXCLUDED.notify,
+        verified_name = EXCLUDED.verified_name,
+        img_url = EXCLUDED.img_url,
+        status = EXCLUDED.status,
+        updated_at = NOW();`;
   }
 
   async update(deviceId: string, data: Partial<Contact>): Promise<void> {
@@ -21,7 +38,15 @@ export class PostgresContactsRepository implements IContactsRepository {
 
     const updatedData = {
       updated_at: new Date(),
-      ...data,
+      id: data.id,
+      lid: data.lid,
+      device_id: deviceId,
+      phone_number: data.phoneNumber,
+      name: data.name,
+      notify: data.notify,
+      verified_name: data.verifiedName,
+      img_url: data.imgUrl,
+      status: data.status,
     };
 
     await this.sql`UPDATE contacts
