@@ -4,6 +4,7 @@ import { server } from './server';
 import { Connection } from './server/connections/service';
 import { sendWebhook } from './server/webhook';
 import { WaStore } from './whatsapp';
+import { traceSentry } from './instrument';
 
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -37,6 +38,14 @@ const shutdown = async (code: string) => {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  traceSentry(err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  traceSentry(reason);
+});
 
 const restoreDevices = async () => {
   const existingDevices = await db.devices.getAll();
