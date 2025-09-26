@@ -56,6 +56,10 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	protected _placeholderResendCache = new NodeCache({
 		stdTTL: 60 * 60, // 1 hour
 	}) as CacheStore;
+  protected _sessionCache = new NodeCache({
+    stdTTL: 5 * 60, // 5 minutes
+    useClones: false,
+  }) as CacheStore
   protected _retriesCount = 0;
 
 	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 });
@@ -148,7 +152,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			auth: {
 				creds: state.creds,
 				/** caching makes the store faster to send/recv messages */
-				keys: makeCacheableSignalKeyStore(state.keys, this.logger),
+				keys: makeCacheableSignalKeyStore(state.keys, this.logger, this._sessionCache),
 			},
 			generateHighQualityLinkPreview: true,
 			markOnlineOnConnect: false,
