@@ -72,10 +72,12 @@ export const useStorage = async (deviceId: string): Promise<IStorage> => {
 			return SessionTable.upsert('creds', deviceId, creds);
 		},
 		clearCreds: async () => {
-			await SessionTable.clear(deviceId);
-			await ContactTable.clear(deviceId);
-			await MessageTable.clear(deviceId);
-			await GroupTable.clear(deviceId);
+      await Promise.all([
+        SessionTable.clear(deviceId),
+        ContactTable.clear(deviceId),
+        MessageTable.clear(deviceId),
+        GroupTable.clear(deviceId),
+      ]);
 		},
 	};
 };
