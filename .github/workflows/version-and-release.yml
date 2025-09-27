@@ -30,11 +30,6 @@ jobs:
         with:
           bun-version: "latest"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 'lts/*'
-
       - name: Configure Git
         run: |
           git config user.name "GitHub Actions Bot"
@@ -46,10 +41,10 @@ jobs:
       - name: Bump version, commit, and tag
         id: tag_version
         run: |
-          # Menggunakan 'npm version' dengan tipe kenaikan yang dipilih (major, minor, atau patch)
+          # Menggunakan 'bun pm version' dengan tipe kenaikan yang dipilih (major, minor, atau patch)
           # Perintah ini secara otomatis memperbarui package.json, membuat commit, dan membuat tag.
           # Output dari perintah ini adalah nomor versi baru (misalnya, v2.3.0), yang kita tangkap.
-          NEW_VERSION=$(npm version ${{ github.event.inputs.version_bump }} -m "chore(release): bump version to %s")
+          NEW_VERSION=$(bun pm version ${{ github.event.inputs.version_bump }} -m "chore(release): bump version to %s")
           echo "new_version_tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Push changes and tags
