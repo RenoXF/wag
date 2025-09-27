@@ -469,10 +469,6 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			return Promise.reject('Socket is not connected');
 		}
 
-		const id = Bun.hash
-			.rapidhash(jid + JSON.stringify(options ?? null))
-			.toString();
-
 		return await this._messageSendQueue.add(
 			async () => {
 				try {
@@ -513,7 +509,6 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					return Promise.reject(`Failed to send message: ${error}`);
 				}
 			},
-			{ id: id },
 		);
 	}
 
