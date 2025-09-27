@@ -19,6 +19,13 @@ export type IConnection = {
   } | null;
   state: WAConnectionState;
   auth: WhatsappAuth | null;
+  queueInfo: {
+    messageSend: number;
+    messageSave: number;
+    contactsSave: number;
+    groupMetadataSave: number;
+    groupMetadataRefresh: number;
+  };
 };
 
 export abstract class Connection {
@@ -132,6 +139,7 @@ export abstract class Connection {
         user: socket.user,
         state: socket.state,
         auth: socket.auth,
+        queueInfo: socket.queueInfo,
       });
     }
 
