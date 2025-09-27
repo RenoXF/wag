@@ -125,6 +125,16 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		return this._auth;
 	}
 
+  public get queueInfo() {
+    return {
+      messageSend: this._messageSendQueue.size,
+      messageSave: this._messageSaveQueue.size,
+      contactsSave: this._contactsQueue.size,
+      groupMetadataSave: this._groupMetadataQueue.size,
+      groupMetadataRefresh: this._groupMetadataRefreshQueue.size,
+    }
+  }
+
 	public async connect() {
 		if (this._socket) {
 			throw new Error('Socket is already connected');
