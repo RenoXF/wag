@@ -9,7 +9,7 @@ import { client } from './client';
 export const server = new Elysia({})
   .onError(({ error, set, code }) => {
     if (code === 'VALIDATION') {
-      return { errors: error.all };
+      return { errors: error.all, error: error.all[0] ?? undefined };
     }
 
     set.status = 400;
