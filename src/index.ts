@@ -48,6 +48,10 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const restoreDevices = async () => {
+  if (Bun.env.NODE_ENV !== 'production') {
+    console.log('Skipping device restoration in non-production environment');
+    return;
+  }
   const existingDevices = await db.devices.getAll();
   for (const row of existingDevices) {
     console.log(`Restoring device: ${row.id}`);
