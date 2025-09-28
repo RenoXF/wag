@@ -3,10 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
+import { Skeleton } from '../components/ui/skeleton';
+import { Separator } from '../components/ui/separator';
 import { SimpleSelect } from '../components/ui/simple-select';
 import type { GroupMetadata } from 'baileys';
 import type { IConnection } from '@/server/connections/service';
 import { client } from '../lib/api';
+import {
+  Users,
+  Search,
+  RefreshCw,
+  Smartphone,
+  AlertCircle,
+  Loader2,
+  Crown,
+  Calendar,
+  Hash
+} from 'lucide-react';
 
 interface GroupsPageProps {}
 
@@ -84,36 +98,37 @@ export function GroupsPage({}: GroupsPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Groups</h2>
-          <p className="text-muted-foreground">Manage your WhatsApp groups</p>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-8 w-8 text-primary" />
+            Groups
+          </h2>
+          <p className="text-muted-foreground">
+            Browse and manage your WhatsApp groups
+          </p>
         </div>
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
           <Button
             onClick={handleRefreshGroups}
             disabled={!selectedDeviceId || refreshing}
             variant="outline"
+            className="gap-2"
           >
             {refreshing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                Refreshing...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <>
-                <span className="mr-2">🔄</span>
-                Refresh
-              </>
+              <RefreshCw className="h-4 w-4" />
             )}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
       </div>
 
       {error && (
-        <Card className="border-destructive">
+        <Card className="border-destructive bg-destructive/5">
           <CardContent className="pt-6">
-            <div className="flex items-center text-destructive">
-              <span className="mr-2">⚠️</span>
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
               {error}
             </div>
           </CardContent>
@@ -121,19 +136,24 @@ export function GroupsPage({}: GroupsPageProps) {
       )}
 
       {/* Device Selection */}
-      <Card>
+      <Card className="border-2 border-muted-foreground/20">
         <CardHeader>
-          <CardTitle>Select Device</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5" />
+            Select Device
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label htmlFor="device-select">Device ID</Label>
+            <Label htmlFor="device-select" className="text-sm font-medium">Device ID</Label>
             {connections.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground">
-                  No connections available. Please start a connection first.
+              <div className="text-center py-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                <Smartphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h4 className="text-lg font-medium mb-2">No connections available</h4>
+                <p className="text-muted-foreground mb-4">
+                  Start a connection first to view groups
                 </p>
-                <Button variant="outline" className="mt-2" onClick={fetchConnections}>
+                <Button variant="outline" className="gap-2" onClick={fetchConnections}>
                   <span className="mr-2">🔄</span>
                   Refresh Connections
                 </Button>

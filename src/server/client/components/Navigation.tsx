@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { Button } from "./ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "./ui/sheet";
+import { Menu, BarChart3, Link as LinkIcon, Users, MessageCircle, Smartphone } from "lucide-react";
+import { Separator } from "./ui/separator";
 
 export function Navigation({ isMobileMenuOpen, setIsMobileMenuOpen }: {
   isMobileMenuOpen: boolean;
@@ -7,10 +11,10 @@ export function Navigation({ isMobileMenuOpen, setIsMobileMenuOpen }: {
 }) {
   const location = useLocation();
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/connections', label: 'Connections', icon: '🔗' },
-    { path: '/groups', label: 'Groups', icon: '👥' },
-    { path: '/messages', label: 'Messages', icon: '💬' },
+    { path: '/', label: 'Dashboard', icon: BarChart3 },
+    { path: '/connections', label: 'Connections', icon: LinkIcon },
+    { path: '/groups', label: 'Groups', icon: Users },
+    { path: '/messages', label: 'Messages', icon: MessageCircle },
   ];
 
   const isActive = (path: string) => {
@@ -21,73 +25,81 @@ export function Navigation({ isMobileMenuOpen, setIsMobileMenuOpen }: {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-gray-900">WAG</h1>
-              <p className="text-xs text-gray-500">WhatsApp Gateway</p>
+            <Link to="/" className="flex items-center space-x-2">
+              <Smartphone className="h-8 w-8 text-primary" />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">WAG</h1>
+                <p className="text-xs text-muted-foreground">WhatsApp Gateway</p>
+              </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(item.path)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <span className="mr-2">{item.icon}</span>
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-600 hover:text-gray-900 focus:outline-none focus:text-gray-900 p-2"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50">
-              {menuItems.map((item) => (
+          <div className="hidden md:flex items-center space-x-1">
+            {menuItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive(item.path)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
                 >
-                  <span className="mr-2">{item.icon}</span>
+                  <IconComponent className="h-4 w-4" />
                   {item.label}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Mobile Navigation */}
+          <div className="md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <Smartphone className="h-6 w-6 text-primary" />
+                    WhatsApp Gateway
+                  </SheetTitle>
+                </SheetHeader>
+                <Separator className="my-4" />
+                <div className="flex flex-col space-y-2">
+                  {menuItems.map((item) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                          isActive(item.path)
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <IconComponent className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
       </div>
     </nav>
   );

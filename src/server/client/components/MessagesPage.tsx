@@ -8,11 +8,29 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { Badge } from "../components/ui/badge";
+import { Skeleton } from "../components/ui/skeleton";
+import { Separator } from "../components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { SimpleSelect } from "../components/ui/simple-select";
 import type { IMessage } from "@/database";
 import type { IConnection } from "@/server/connections/service";
 import { type GroupMetadata } from "baileys";
 import { client } from "../lib/api";
+import {
+  MessageCircle,
+  Send,
+  Users,
+  Smartphone,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  FileText,
+  Image,
+  Video,
+  File
+} from "lucide-react";
 
 interface MessagesPageProps {}
 
@@ -142,30 +160,37 @@ export function MessagesPage({}: MessagesPageProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Messages</h2>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <MessageCircle className="h-8 w-8 text-primary" />
+            Messages
+          </h2>
           <p className="text-muted-foreground">
-            Send and manage WhatsApp messages
+            Send text, images, videos and documents via WhatsApp
           </p>
         </div>
         <Button
           onClick={fetchMessages}
           variant="outline"
-          className="mt-4 sm:mt-0"
-          disabled={!selectedDeviceId}
+          className="mt-4 sm:mt-0 gap-2"
+          disabled={!selectedDeviceId || loading}
         >
-          <span className="mr-2">🔄</span>
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <MessageCircle className="h-4 w-4" />
+          )}
           Refresh
         </Button>
       </div>
 
       {error && (
-        <Card className="border-destructive">
+        <Card className="border-destructive bg-destructive/5">
           <CardContent className="pt-6">
-            <div className="flex items-center text-destructive">
-              <span className="mr-2">⚠️</span>
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
               {error}
             </div>
           </CardContent>
@@ -173,10 +198,10 @@ export function MessagesPage({}: MessagesPageProps) {
       )}
 
       {successMessage && (
-        <Card className="border-green-500 bg-green-50">
+        <Card className="border-green-500 bg-green-50 dark:bg-green-950/20">
           <CardContent className="pt-6">
-            <div className="flex items-center text-green-700">
-              <span className="mr-2">✅</span>
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <CheckCircle2 className="h-5 w-5" />
               {successMessage}
             </div>
           </CardContent>
@@ -226,12 +251,15 @@ export function MessagesPage({}: MessagesPageProps) {
       {selectedDeviceId && (
         <Card>
           <CardHeader>
-            <CardTitle>Send Message</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Send Text Message
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Recipient Type</Label>
+                <Label className="text-sm font-medium">Recipient Type</Label>
                 <SimpleSelect
                   value={messageForm.recipientType}
                   onValueChange={(value: string) =>
@@ -249,7 +277,7 @@ export function MessagesPage({}: MessagesPageProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="recipient">Recipient *</Label>
+                <Label htmlFor="recipient" className="text-sm font-medium">Recipient *</Label>
                 {messageForm.recipientType === "group" ? (
                   <SimpleSelect
                     value={messageForm.recipient}
@@ -273,44 +301,41 @@ export function MessagesPage({}: MessagesPageProps) {
                         recipient: e.target.value,
                       })
                     }
+                    className="transition-all focus:ring-2 focus:ring-primary/20"
                   />
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="message">Message *</Label>
-              <textarea
+              <Label htmlFor="message" className="text-sm font-medium">Message *</Label>
+              <Textarea
                 id="message"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                 placeholder="Type your message here..."
                 value={messageForm.message}
                 onChange={(e) =>
                   setMessageForm({ ...messageForm, message: e.target.value })
                 }
-                rows={4}
+                className="min-h-[100px] transition-all focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
-            <Button
-              onClick={handleSendMessage}
-              disabled={
-                sending || !messageForm.recipient || !messageForm.message.trim()
-              }
-              className="w-full sm:w-auto"
-            >
-              {sending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <span className="mr-2">📤</span>
-                  Send Message
-                </>
-              )}
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSendMessage}
+                disabled={
+                  sending || !messageForm.recipient || !messageForm.message.trim()
+                }
+                className="gap-2"
+              >
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {sending ? "Sending..." : "Send Message"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

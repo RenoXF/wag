@@ -15,26 +15,28 @@
   }
 }
 
-/* Subtle background pattern */
+/* Enhanced subtle background pattern */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  opacity: 0.02;
-  background: url("./logo.svg");
-  background-size: 128px;
-  transform: rotate(-12deg) scale(0.8);
-  animation: slide 60s linear infinite;
+  opacity: 0.015;
+  background:
+    radial-gradient(circle at 25% 25%, hsl(var(--primary)) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, hsl(var(--secondary)) 0%, transparent 50%),
+    linear-gradient(135deg, transparent 40%, hsl(var(--muted)) 50%, transparent 60%);
+  background-size: 400px 400px, 350px 350px, 200px 200px;
+  animation: gentle-float 20s ease-in-out infinite;
   pointer-events: none;
 }
 
-@keyframes slide {
-  from {
-    background-position: 0 0;
+@keyframes gentle-float {
+  0%, 100% {
+    background-position: 0% 0%, 100% 100%, 50% 50%;
   }
-  to {
-    background-position: 256px 224px;
+  50% {
+    background-position: 100% 100%, 0% 0%, 25% 75%;
   }
 }
 
@@ -45,6 +47,26 @@ body::before {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 @media (prefers-reduced-motion) {

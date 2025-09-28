@@ -8,11 +8,27 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import { Skeleton } from "../components/ui/skeleton";
+import { Separator } from "../components/ui/separator";
 import { Modal } from "../components/ui/modal";
 import { QrCodeComponent } from "../components/ui/qr-code";
 import { client } from "../lib/api";
 import type { IConnection } from "@/server/connections/service";
 import type { WAConnectionState } from "baileys";
+import {
+  Plus,
+  Smartphone,
+  Wifi,
+  WifiOff,
+  QrCode,
+  Trash2,
+  RotateCcw,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Loader2
+} from "lucide-react";
 
 interface ConnectionsPageProps {}
 
@@ -168,74 +184,112 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
     });
   };
 
-  const getStatusColor = (status: WAConnectionState) => {
+  const getStatusBadgeVariant = (status: WAConnectionState) => {
     switch (status) {
       case "open":
-        return "bg-green-500";
+        return "default"; // Green
       case "connecting":
-        return "bg-yellow-500";
+        return "secondary"; // Yellow
       case "close":
-        return "bg-red-500";
+        return "destructive"; // Red
       default:
-        return "bg-gray-500";
+        return "outline";
+    }
+  };
+
+  const getStatusIcon = (status: WAConnectionState) => {
+    switch (status) {
+      case "open":
+        return <CheckCircle2 className="h-4 w-4" />;
+      case "connecting":
+        return <Clock className="h-4 w-4" />;
+      case "close":
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return <WifiOff className="h-4 w-4" />;
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Connections</h2>
-          <p className="text-muted-foreground">
-            Manage your WhatsApp connections
-          </p>
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-[200px]" />
+          <Skeleton className="h-4 w-[300px]" />
         </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="space-y-2">
+                <Skeleton className="h-6 w-[150px]" />
+                <Skeleton className="h-4 w-[100px]" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-[80px]" />
+                  <Skeleton className="h-8 w-[80px]" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Connections</h2>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Smartphone className="h-8 w-8 text-primary" />
+            Connections
+          </h2>
           <p className="text-muted-foreground">
-            Manage your WhatsApp connections
+            Manage your WhatsApp device connections and monitor their status
           </p>
         </div>
         <Button
           onClick={fetchConnections}
           variant="outline"
-          className="mt-4 sm:mt-0"
+          className="mt-4 sm:mt-0 gap-2"
+          disabled={loading}
         >
-          <span className="mr-2">🔄</span>
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RotateCcw className="h-4 w-4" />
+          )}
           Refresh
         </Button>
       </div>
 
       {error && (
-        <Card className="border-destructive">
+        <Card className="border-destructive bg-destructive/5">
           <CardContent className="pt-6">
-            <div className="flex items-center text-destructive">
-              <span className="mr-2">⚠️</span>
-              {error}
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>{error}</span>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Create New Connection */}
-      <Card>
+      <Card className="border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors">
         <CardHeader>
-          <CardTitle>Start New Connection</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Start New Connection
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="deviceId">Device ID *</Label>
+              <Label htmlFor="deviceId" className="text-sm font-medium">
+                Device ID *
+              </Label>
               <Input
                 id="deviceId"
                 placeholder="e.g., device1, my-phone"
@@ -246,10 +300,16 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
                     deviceId: e.target.value,
                   })
                 }
+                className="transition-all focus:ring-2 focus:ring-primary/20"
               />
+              <p className="text-xs text-muted-foreground">
+                Unique identifier for your WhatsApp device
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="webhookUrl">Webhook URL (Optional)</Label>
+              <Label htmlFor="webhookUrl" className="text-sm font-medium">
+                Webhook URL (Optional)
+              </Label>
               <Input
                 id="webhookUrl"
                 placeholder="https://your-webhook-url.com/webhook"
@@ -260,145 +320,107 @@ export function ConnectionsPage({}: ConnectionsPageProps) {
                     webhookUrl: e.target.value,
                   })
                 }
+                className="transition-all focus:ring-2 focus:ring-primary/20"
               />
+              <p className="text-xs text-muted-foreground">
+                URL to receive WhatsApp events (optional)
+              </p>
             </div>
           </div>
-          <Button
-            onClick={handleStartConnection}
-            disabled={isCreating || !newConnection.deviceId.trim()}
-            className="w-full sm:w-auto"
-          >
-            {isCreating ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Starting...
-              </>
-            ) : (
-              <>
-                <span className="mr-2">🚀</span>
-                Start Connection
-              </>
-            )}
-          </Button>
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={handleStartConnection}
+              disabled={isCreating || !newConnection.deviceId.trim()}
+              className="gap-2"
+            >
+              {isCreating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wifi className="h-4 w-4" />
+              )}
+              {isCreating ? "Starting Connection..." : "Start Connection"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
+      <Separator />
+
       {/* Connections List */}
-      <div className="grid gap-4">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Active Connections</h3>
         {connections.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <span className="text-4xl mb-4 block">📱</span>
-                <h3 className="text-lg font-medium mb-2">
-                  No connections found
-                </h3>
-                <p className="text-muted-foreground">
-                  Start your first WhatsApp connection to get started.
-                </p>
-              </div>
+          <Card className="border-dashed">
+            <CardContent className="py-12 text-center">
+              <Smartphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h4 className="text-lg font-medium mb-2">No connections found</h4>
+              <p className="text-muted-foreground mb-4">
+                Start your first WhatsApp connection to begin
+              </p>
             </CardContent>
           </Card>
         ) : (
-          connections.map((connection) => (
-            <Card key={connection.deviceId}>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center space-x-1">
-                    <div
-                      className={`h-3 w-3 rounded-full ${getStatusColor(
-                        connection.state
-                      )}`}
-                    ></div>
-                    <CardTitle className="text-lg">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {connections.map((connection) => (
+              <Card key={connection.deviceId} className="hover:shadow-lg transition-all duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Smartphone className="h-5 w-5" />
                       {connection.deviceId}
                     </CardTitle>
+                    <Badge variant={getStatusBadgeVariant(connection.state)} className="gap-1">
+                      {getStatusIcon(connection.state)}
+                      {connection.state}
+                    </Badge>
                   </div>
-                  <div className="flex items-center space-x-0 mt-0 sm:mt-0">
-                    <span className="text-sm text-muted-foreground capitalize">
-                      {connection.state || "Unknown"}
-                    </span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {/* {connection.webhookUrl && (
-                    <div>
-                      <Label className="text-sm font-medium">Webhook URL</Label>
-                      <p className="text-sm text-muted-foreground break-all">
-                        {connection.webhookUrl}
-                      </p>
-                    </div>
-                  )} */}
-
+                </CardHeader>
+                <CardContent className="space-y-4">
                   {connection.user && (
-                    <div>
-                      <Label className="text-sm font-medium">
-                        { connection.user.name}
-                      </Label>
-                      <div className="flex flex-col gap-2 mt-1">
-                        <span className="text-sm text-muted-foreground">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">User:</span>
+                      <div className="mt-1">
+                        <p className="font-medium">{connection.user.name}</p>
+                        <p className="text-xs text-muted-foreground">
                           {connection.user.phoneNumber || connection.user.id}
-                        </span>
+                        </p>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-2">
-                    {connection.state === "connecting" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleShowQrCode(connection.deviceId)}
-                        disabled={qrLoading === connection.deviceId}
-                        className="flex items-center"
-                      >
-                        {qrLoading === connection.deviceId ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                        ) : (
-                          <span className="mr-2">📱</span>
-                        )}
-                        Show QR Code
-                      </Button>
-                    )}
-
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleShowQrCode(connection.deviceId)}
+                      disabled={qrLoading === connection.deviceId || connection.state === "open"}
+                      className="gap-1 flex-1"
+                    >
+                      {qrLoading === connection.deviceId ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <QrCode className="h-4 w-4" />
+                      )}
+                      {connection.state === "open" ? "Connected" : "Show QR"}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleStopConnection(connection.deviceId)}
                       disabled={actionLoading === connection.deviceId}
-                      className="flex items-center"
+                      className="gap-1 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                     >
                       {actionLoading === connection.deviceId ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <span className="mr-2">⏹️</span>
+                        <Trash2 className="h-4 w-4" />
                       )}
-                      Stop
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleLogoutConnection(connection.deviceId)
-                      }
-                      disabled={actionLoading === connection.deviceId}
-                      className="flex items-center"
-                    >
-                      {actionLoading === connection.deviceId ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                      ) : (
-                        <span className="mr-2">🚪</span>
-                      )}
-                      Logout
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
 
