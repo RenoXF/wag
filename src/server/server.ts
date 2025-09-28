@@ -7,20 +7,6 @@ import { messages } from './messages';
 import { client } from './client';
 
 export const server = new Elysia({})
-  .onError(({ error, set, code }) => {
-    if (code === 'VALIDATION') {
-      return { errors: error.all, error: error.all[0] ?? undefined };
-    }
-
-    set.status = 400;
-    if (error instanceof Error) {
-      return {
-        error: error.message,
-      };
-    }
-
-    return { error: 'Unknown error' };
-  })
   .use(
     swagger({
       path: '/docs',
@@ -47,10 +33,6 @@ export const server = new Elysia({})
       },
     })
   )
-  .use(groups)
-  .use(messages)
-  .use(connections)
-  .use(client)
   .get(
     '/status',
     () => {
@@ -69,6 +51,24 @@ export const server = new Elysia({})
           'Retrieve the current status of the server including uptime, timestamp, and memory usage.',
       },
     }
-  );
+  )
+  .onError(({ error, set, code }) => {
+    if (code === 'VALIDATION') {
+      return { errors: error.all, error: error.all[0] ?? undefined };
+    }
+
+    set.status = 400;
+    if (error instanceof Error) {
+      return {
+        error: error.message,
+      };
+    }
+
+    return { error: 'Unknown error' };
+  })
+  .use(groups)
+  .use(messages)
+  .use(connections)
+  .use(client);
 
 export type ServerType = typeof server;
