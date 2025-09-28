@@ -7,6 +7,20 @@ import { messages } from './messages';
 import { client } from './client';
 
 export const server = new Elysia({})
+  .onError(({ error, set, code }) => {
+    if (code === 'VALIDATION') {
+      return { errors: error.all };
+    }
+
+    set.status = 400;
+    if (error instanceof Error) {
+      return {
+        error: error.message,
+      };
+    }
+
+    return { error: 'Unknown error' };
+  })
   .use(
     swagger({
       path: '/docs',
