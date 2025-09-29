@@ -63,6 +63,8 @@ jobs:
       - name: Build all binaries
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NODE_ENV: production
+          TZ: Asia/Jakarta
         run: bun run bundle
 
       - name: Create GitHub Release and Upload Assets
