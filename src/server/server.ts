@@ -5,6 +5,7 @@ import { connections } from './connections';
 import { groups } from './groups';
 import { messages } from './messages';
 import { client } from './client';
+import os from 'node:os';
 
 export const server = new Elysia({})
   .use(
@@ -37,10 +38,24 @@ export const server = new Elysia({})
     '/status',
     () => {
       return {
+        pid: process.pid,
+        title: process.title,
         uptime: Math.floor(process.uptime()),
         timestamp: Date.now(),
         memory: Math.round(process.memoryUsage.rss() / 1024 / 1024), // in MB
+        availableMemory: Math.round(process.availableMemory() / 1024 / 1024), // in MB
+        constrainedMemory: Math.round(process.constrainedMemory() / 1024 / 1024), // in MB
         version: pkg.version,
+        os: {
+          platform: os.platform(),
+          totalmem: Math.round(os.totalmem() / 1024 / 1024), // in MB
+          freemem: Math.round(os.freemem() / 1024 / 1024), // in MB
+          cpus: os.cpus().length,
+          availableParallelism: os.availableParallelism(),
+          arch: os.arch(),
+          release: os.release(),
+          type: os.type(),
+        }
       };
     },
     {
