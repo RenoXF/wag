@@ -5,6 +5,7 @@ import { Connection } from './server/connections/service';
 import { sendWebhook } from './server/webhook';
 import { WaStore } from './whatsapp';
 import { traceSentry } from './instrument';
+import pkg from '../package.json' assert { type: 'json' };
 
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -36,6 +37,7 @@ const shutdown = async (code: string) => {
   process.exit(0);
 };
 
+process.title = `${pkg.name} v${pkg.version}`;
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 process.on('uncaughtException', (err) => {
