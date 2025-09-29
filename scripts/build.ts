@@ -28,6 +28,7 @@ for (const platform of platforms) {
     minify: true,
     target: 'bun',
     define: define,
+    env: "inline",
   });
 
   const endTime = Date.now();
