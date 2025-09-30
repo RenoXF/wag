@@ -80,8 +80,8 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
         sentry: {
           dsn: sentryDsn,
           withLogRecord: true,
-          tags: ['level'],
-          context: ['hostname'],
+          tags: ['level', 'deviceId'],
+          context: ['hostname', 'version'],
         },
         minLevel: 40,
       })
