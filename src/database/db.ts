@@ -1,12 +1,6 @@
-import { SQL } from 'bun';
 import { PostgresDatabaseService } from './repositories/postgres/service';
 import { traceSentry } from '@/instrument';
-
-export const sql = new SQL({
-  idleTimeout: 300,
-  max: 5,
-  connectionTimeout: 10,
-});
+import { sql } from './sql';
 
 try {
   await sql.connect();
