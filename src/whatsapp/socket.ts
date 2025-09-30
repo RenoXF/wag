@@ -26,7 +26,7 @@ import P from 'pino';
 import { ContactTable, GroupTable, MessageTable } from '../database/models';
 import { useStorage } from './storage';
 import { version } from '../../package.json'
-import { traceSentry } from '@/instrument';
+import { sentryDsn, traceSentry } from '@/instrument';
 
 export type WhatsappAuth = {
 	via: 'qr_code' | 'pair_code';
@@ -74,7 +74,17 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 	constructor(public readonly deviceId: string, public readonly webhookUrl?: string | null) {
 		super();
+    const sentryOpts = {};
+    if (sentryDsn) {
+      Object.assign(sentryOpts, {
+        sentry: {
+          dsn: sentryDsn,
+        },
+        minLevel: 40,
+      })
+    }
 		this.logger = P({
+      ...sentryOpts,
       level: process.env.NODE_ENV === 'production' ? 'error' : 'trace',
       formatters: {
         log(object) {

@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 declare const SENTRY_DSN: string;
 
-const sentryDsn = Bun.env.SENTRY_DSN ?? typeof SENTRY_DSN === 'string' ? SENTRY_DSN : null;
+export const sentryDsn = Bun.env.SENTRY_DSN ?? typeof SENTRY_DSN === 'string' ? SENTRY_DSN : null;
 if (sentryDsn) {
   console.log("Initializing Sentry");
   Sentry.init({
