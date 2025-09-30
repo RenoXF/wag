@@ -79,6 +79,9 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
       Object.assign(sentryOpts, {
         sentry: {
           dsn: sentryDsn,
+          withLogRecord: true,
+          tags: ['level'],
+          context: ['hostname'],
         },
         minLevel: 40,
       })
