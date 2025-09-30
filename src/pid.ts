@@ -13,7 +13,9 @@ export const checkPid = () => {
 }
 
 export const createPid = () => {
-  writeFileSync(pidPath, process.pid.toString())
+  writeFileSync(pidPath, process.pid.toString(), {
+    mode: 0o644,
+  })
 }
 
 export const removePid = () => {
