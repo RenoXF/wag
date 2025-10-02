@@ -29,7 +29,7 @@
         "pino-pretty": "^13.1.1",
         "pino-sentry-transport": "^1.5.1",
         "qrcode-generator": "^2.0.4",
-        "react": "^19.1.1",
+        "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-hook-form": "^7.63.0",
         "react-router-dom": "^7.9.3",
@@ -43,7 +43,7 @@
         "@types/bun": "^1.2.23",
         "@types/node": "^24.6.2",
         "@types/qrcode-generator": "^1.0.6",
-        "@types/react": "^19.1.17",
+        "@types/react": "^19.2.0",
         "@types/react-dom": "^19.2.0",
         "shadcn": "^3.3.1",
       },
@@ -515,7 +515,7 @@
 
     "@types/qrcode-generator": ["@types/qrcode-generator@1.0.6", "", { "dependencies": { "qrcode-generator": "*" } }, "sha512-XasuPjhHBC4hyOJ/pHaUNTj+tNxA1SyZpXaS/FOUxEVX03D1gFM8UmMKSIs+pPHLAmRZpU6j9KYxvo+lfsvhKw=="],
 
-    "@types/react": ["@types/react@19.1.17", "", { "dependencies": { "csstype": "^3.0.2" } }, "sha512-Qec1E3mhALmaspIrhWt9jkQMNdw6bReVu64mjvhbhq2NFPftLPVr+l1SZgmw/66WwBNpDh7ao5AT6gF5v41PFA=="],
+    "@types/react": ["@types/react@19.2.0", "", { "dependencies": { "csstype": "^3.0.2" } }, "sha512-1LOH8xovvsKsCBq1wnT4ntDUdCJKmnEakhsuoUSy6ExlHCkGP2hqnatagYTgFk6oeL0VU31u7SNjunPN+GchtA=="],
 
     "@types/react-dom": ["@types/react-dom@19.2.0", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-brtBs0MnE9SMx7px208g39lRmC5uHZs96caOJfTjFcYSLHNamvaSMfJNagChVNkup2SdtOxKX1FDBkRSJe1ZAg=="],
 
@@ -1143,7 +1143,7 @@
 
     "raw-body": ["raw-body@3.0.1", "", { "dependencies": { "bytes": "3.1.2", "http-errors": "2.0.0", "iconv-lite": "0.7.0", "unpipe": "1.0.0" } }, "sha512-9G8cA+tuMS75+6G/TzW8OtLzmBDMo8p1JRxN5AZ+LAp8uxGA8V8GZm4GQ4/N5QNQEnLmg6SS7wyuSmbKepiKqA=="],
 
-    "react": ["react@19.1.1", "", {}, "sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ=="],
+    "react": ["react@19.2.0", "", {}, "sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ=="],
 
     "react-dom": ["react-dom@19.2.0", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.0" } }, "sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ=="],
 
