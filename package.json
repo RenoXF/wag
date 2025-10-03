@@ -35,7 +35,7 @@
 		"@sentry/node": "^10.17.0",
 		"@types/react-router-dom": "^5.3.3",
 		"audio-decode": "^2.2.3",
-		"baileys": "^7.0.0-rc.4",
+		"baileys": "^7.0.0-rc.5",
 		"bun-plugin-tailwind": "^0.0.15",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
