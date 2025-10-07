@@ -41,11 +41,26 @@ export interface WhatsappEvent {
 	error: [Error];
 }
 
+export interface WhatsappStats {
+  messageSent: number;
+  messageFailed: number;
+  messageReceived: number;
+  connection: number;
+  disconnect: number;
+}
+
 export class WaSocket extends EventEmitter<WhatsappEvent> {
 	protected logger: P.Logger;
 	protected _state: WAConnectionState = 'close';
 	protected _auth: WhatsappAuth | null = null;
 	protected _socket: WASocket | null = null;
+  protected _stats: WhatsappStats = {
+    messageSent: 0,
+    messageFailed: 0,
+    messageReceived: 0,
+    connection: 0,
+    disconnect: 0,
+  }
 
 	protected _msgRetryCounterCache = new NodeCache({
 		stdTTL: 60 * 60, // 1 hour
@@ -133,6 +148,10 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	public get state() {
 		return this._state;
 	}
+
+  public get stats() {
+    return this._stats;
+  }
 
 	public get auth() {
 		return this._auth;
@@ -226,6 +245,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			}
 
 			if (connection === 'close') {
+        this._stats.disconnect++;
 				const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
 				const statusMsg = ((lastDisconnect?.error as Boom)?.message ?? '').toLowerCase();
 
@@ -297,6 +317,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			}
 
 			if (connection === 'open') {
+        this._stats.connection++;
 				// we're connected
 				this._auth = null;
 				this._socket = sock;
@@ -368,6 +389,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 				this._messageSaveQueue.add(
 					() => {
+            this._stats.messageReceived++;
 						return MessageTable.upsert(id, remoteJid, this.deviceId, message);
 					},
 					{ id: id },
@@ -486,6 +508,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		return await this._messageSendQueue.add(
 			async () => {
 				try {
+          this._stats.messageSent++;
 					await socket.presenceSubscribe(jid);
 					await socket.sendPresenceUpdate('available', jid);
 
@@ -513,6 +536,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					}
           return Promise.reject('Failed to send message: Unknown error');
 				} catch (error) {
+          this._stats.messageFailed++;
           traceSentry(error, {
             data: {
               jid: jid,

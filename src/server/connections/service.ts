@@ -1,5 +1,5 @@
 import type { WAConnectionState } from 'baileys';
-import { WaSocket, WaStore, type WhatsappAuth } from '../../whatsapp';
+import { WaSocket, WaStore, type WhatsappAuth, type WhatsappStats } from '../../whatsapp';
 import type { ConnectionModel } from './model';
 import { queue } from '../queue';
 import { sendWebhook } from '../webhook';
@@ -26,6 +26,7 @@ export type IConnection = {
     groupMetadataSave: number;
     groupMetadataRefresh: number;
   };
+  stats: WhatsappStats
 };
 
 export abstract class Connection {
@@ -140,6 +141,7 @@ export abstract class Connection {
         state: socket.state,
         auth: socket.auth,
         queueInfo: socket.queueInfo,
+        stats: socket.stats,
       });
     }
 
