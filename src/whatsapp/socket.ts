@@ -77,10 +77,10 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
   }) as CacheStore
   protected _retriesCount = 0;
 
-	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 });
-	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 });
-	protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 30 });
-	protected _messageSendQueue = new PQueue({ concurrency: 1 });
+	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 30 * 1000 });
+	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 30 * 1000 });
+	protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 30 * 1000 });
+	protected _messageSendQueue = new PQueue({ concurrency: 1, timeout: 30 * 1000 });
 	protected _groupMetadataRefreshQueue = new PQueue({
 		concurrency: 1,
 		interval: 60_000,
