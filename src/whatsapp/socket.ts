@@ -531,6 +531,8 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					await socket.sendPresenceUpdate('available', jid);
 					const res = await socket.sendMessage(jid, content, options);
 
+          await Bun.sleep(500 * randomInt(4, 6));
+
 					if (res) {
 						return Promise.resolve(res);
 					}
