@@ -65,7 +65,9 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           NODE_ENV: production
           TZ: Asia/Jakarta
-        run: bun run bundle
+        run: |
+          bun typecheck
+          NODE_ENV=production TZ=Asia/Jakarta bun ./scripts/build.ts
 
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
