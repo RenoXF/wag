@@ -5,7 +5,7 @@
 	"version": "0.0.35",
 	"private": true,
 	"devDependencies": {
-		"@biomejs/biome": "2.2.5",
+		"@biomejs/biome": "2.2.6",
 		"@types/bun": "^1.2.23",
 		"@types/node": "^24.7.1",
 		"@types/qrcode-generator": "^1.0.6",
