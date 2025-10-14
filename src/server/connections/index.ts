@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia';
+import { cron } from '@elysiajs/cron'
 import { ConnectionModel } from './model';
 import { Connection } from './service';
 
@@ -9,6 +10,18 @@ export const connections = new Elysia({
 		description: 'Endpoints to manage connections',
 	},
 })
+  .use(cron({
+    name: 'set-online',
+    pattern: '0 0 * * *',
+    async run() {
+      const devices = await Connection.getAll();
+      for (const device of devices) {
+        const id = device.deviceId;
+
+        Connection.setOnline({ deviceId: id });
+      }
+    }
+  }))
 	.get(
 		'/',
 		async () => {
@@ -137,6 +150,29 @@ export const connections = new Elysia({
 
 			return {
 				data: qrData,
+			};
+		},
+		{
+			body: ConnectionModel.Default,
+			detail: {
+				summary: 'Get QR code for a connection',
+				description:
+					'Retrieve the QR code for an existing connection if available.',
+			},
+		},
+	)
+  .post(
+		'/set-online',
+		async ({ body, set }) => {
+			if (!Connection.has({ deviceId: body.deviceId })) {
+				set.status = 400;
+				return { error: 'Connection not found' };
+			}
+
+			const status = await Connection.setOnline(body);
+
+			return {
+				data: status,
 			};
 		},
 		{

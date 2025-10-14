@@ -165,4 +165,13 @@ export abstract class Connection {
 
     return null;
   }
+
+  public static async setOnline({ deviceId }: ConnectionModel.Default) {
+    if (WaStore.has(deviceId)) {
+      const socket = WaStore.get(deviceId);
+      return await socket?.setOnline();
+    }
+
+    return false;
+  }
 }
