@@ -179,6 +179,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		const { state, saveCreds, clearCreds } = await useStorage(this.deviceId);
 
     if (this._retriesCount >= 15) {
+      console.log('Maximum retries reached, clearing credentials and requiring re-authentication');
       this._cleanup(false, 'Maximum retries reached, cleared credentials', clearCreds);
       return;
     }
@@ -186,11 +187,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
     this._sessionCache.flushAll();
 
 		// fetch latest version of WA Web
-		// const { version, isLatest } = await fetchLatestBaileysVersion();
-		// console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+		const { version, isLatest } = await fetchLatestBaileysVersion();
+		console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
 		const sock = makeWASocket({
-			// version,
+			version,
 			logger: this.logger,
 			browser: Browsers.ubuntu('Chrome'),
 			auth: {
@@ -313,7 +314,11 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 
 				console.log(`Connection closed due to ${lastDisconnect?.error}`);
 
-				this._cleanup(false, statusMsg);
+				this._cleanup(true, statusMsg);
+        this._retriesCount++;
+        return this.connect().catch((err) => {
+          this.emit('error', err);
+        });
 			}
 
 			if (connection === 'open') {
