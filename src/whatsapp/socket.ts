@@ -287,9 +287,9 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					DisconnectReason.loggedOut,
 					DisconnectReason.multideviceMismatch,
           DisconnectReason.forbidden,
-					406, // Banned
-					402, // Temp banned
-					405, // Client too old
+					// 406, // Banned
+					// 402, // Temp banned
+					// 405, // Client too old
 				];
 
 				if (restartedCodes.includes(statusCode)) {
