@@ -3,7 +3,11 @@ import { db } from '../db';
 import { traceSentry } from '@/instrument';
 
 export abstract class ContactTable {
-  static async upsert(deviceId: string, data: Contact): Promise<void> {
+  static async upsert(deviceId: string, data?: Contact | null): Promise<void> {
+    if (!data) {
+      return;
+    }
+
     return db.contacts.upsert(deviceId, data)
       .catch((err) => {
         traceSentry(err, {

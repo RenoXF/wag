@@ -5,6 +5,10 @@ import { traceSentry } from '@/instrument';
 
 export abstract class GroupTable {
   public static upsert(id: string, deviceId: string, data: Partial<GroupMetadata>): Promise<void> {
+    if (!data) {
+      return Promise.resolve();
+    }
+
     return db.groups.upsert(id, deviceId, transformBuffer(data))
       .catch((err) => {
         traceSentry(err);

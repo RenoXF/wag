@@ -26,8 +26,12 @@ export abstract class MessageTable {
     id: string,
     remoteJid: string,
     deviceId: string,
-    data: WAMessage
+    data?: WAMessage | null
   ): Promise<void> {
+    if (!data) {
+      return;
+    }
+
     const fromMe = data.key.fromMe || false;
     const isRealMsg = isRealMessage(data, deviceId);
     const text = extractText(data);

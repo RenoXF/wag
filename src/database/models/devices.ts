@@ -3,7 +3,11 @@ import { db } from '../db';
 import type { IDevice, IDeviceParams } from '../repositories/interfaces';
 
 export abstract class DeviceTable {
-  static async upsert(deviceId: string, data: IDeviceParams): Promise<void> {
+  static async upsert(deviceId: string, data?: IDeviceParams | null): Promise<void> {
+    if (!data) {
+      return;
+    }
+
     return db.devices.upsert(deviceId, data)
       .catch((err) => {
         traceSentry(err);
