@@ -579,6 +579,20 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		return true;
 	}
 
+  public async setOnline() {
+    if (! this._socket) {
+      return false;
+    }
+
+    try {
+      await this._socket.sendPresenceUpdate('available');
+    } catch (error) {
+      return false;
+    }
+
+    return true;
+  }
+
 	private _cleanup(
 		isRestart: boolean = false,
 		reason?: string,
