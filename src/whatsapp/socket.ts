@@ -18,7 +18,7 @@ import makeWASocket, {
 	makeCacheableSignalKeyStore,
 	type WAConnectionState,
 	type WASocket,
-  proto,
+  type WAMessage,
 } from 'baileys';
 import { sleep } from 'bun';
 import PQueue from 'p-queue';
@@ -80,7 +80,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
 	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
 	protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
-	protected _messageSendQueue = new PQueue({ concurrency: 1 });
+	protected _messageSendQueue = new PQueue({ concurrency: 1, interval: 60_000, intervalCap: 1, });
 	protected _groupMetadataRefreshQueue = new PQueue({
 		concurrency: 1,
 		interval: 60_000,
@@ -370,7 +370,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		});
 
 		sock.ev.on('group-participants.update', ({ id, participants, action }) => {
-			const contacts: GroupParticipant[] = participants.map((p) => ({ id: p }));
+			const contacts: GroupParticipant[] = participants;
 
 			if (action === 'add') {
 				this._groupMetadataQueue.add(
@@ -379,7 +379,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				);
 			} else if (action === 'remove') {
 				this._groupMetadataQueue.add(
-					() => GroupTable.removeParticipants(id, this.deviceId, participants),
+					() => GroupTable.removeParticipants(id, this.deviceId, participants.map((p) => p.id)),
 					{ id },
 				);
 			}
@@ -504,7 +504,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		jid: string,
 		content: AnyMessageContent,
 		options?: MiscMessageGenerationOptions,
-	): Promise<proto.WebMessageInfo | void> {
+	): Promise<WAMessage | void> {
 		const socket = this._socket;
 		if (!socket) {
 			return Promise.reject('Socket is not connected');
