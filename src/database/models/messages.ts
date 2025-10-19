@@ -33,7 +33,7 @@ export abstract class MessageTable {
     }
 
     const fromMe = data.key.fromMe || false;
-    const isRealMsg = isRealMessage(data, deviceId);
+    const isRealMsg = isRealMessage(data);
     const text = extractText(data);
     const type = getContentType(data.message ?? undefined) || 'unknown';
     const device = getDevice(id);
