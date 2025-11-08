@@ -193,7 +193,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 		const sock = makeWASocket({
 			version,
 			logger: this.logger,
-			browser: Browsers.ubuntu('Chrome'),
+			browser: Browsers.macOS('Safari'),
 			auth: {
 				creds: state.creds,
 				/** caching makes the store faster to send/recv messages */
