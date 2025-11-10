@@ -25,7 +25,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
   }
   protected async runMigrationQueries(tx: TransactionSQL): Promise<void> {
     await tx`CREATE TABLE IF NOT EXISTS "devices" (
-      "id" varchar(26) NOT NULL PRIMARY KEY,
+      "id" varchar NOT NULL PRIMARY KEY,
       "name" text,
       "description" text,
       "browser" text,
@@ -41,7 +41,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
 
     await tx`CREATE TABLE IF NOT EXISTS "contacts" (
       "id" text NOT NULL,
-      "device_id" varchar(26) NOT NULL,
+      "device_id" varchar NOT NULL,
       "lid" text,
       "phone_number" text,
       "img_url" text,
@@ -57,7 +57,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
 
     await tx`CREATE TABLE IF NOT EXISTS "sessions" (
       "id" text NOT NULL,
-      "device_id" varchar(26) NOT NULL,
+      "device_id" varchar NOT NULL,
       "data" jsonb NOT NULL,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -67,7 +67,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
 
     await tx`CREATE TABLE IF NOT EXISTS "conversations" (
       "id" text NOT NULL,
-      "device_id" varchar(26) NOT NULL,
+      "device_id" varchar NOT NULL,
       "data" jsonb NOT NULL,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -77,7 +77,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
 
     await tx`CREATE TABLE IF NOT EXISTS "groups" (
       "id" text NOT NULL,
-      "device_id" varchar(26) NOT NULL,
+      "device_id" varchar NOT NULL,
       "data" jsonb NOT NULL,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -92,7 +92,7 @@ export class PostgresDatabaseService extends BaseDatabaseService {
       "is_real_message" boolean DEFAULT true,
       "type" text NOT NULL,
       "device" text NOT NULL,
-      "device_id" varchar(26) NOT NULL,
+      "device_id" varchar NOT NULL,
       "data" jsonb NOT NULL,
       "text" text,
       "media" text,
