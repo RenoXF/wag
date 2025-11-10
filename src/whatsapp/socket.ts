@@ -515,25 +515,26 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				try {
           this._stats.messageSent++;
 					await socket.presenceSubscribe(jid);
-					await socket.sendPresenceUpdate('available', jid);
+					// await socket.sendPresenceUpdate('available', jid);
 
 					await sleep(1000 * randomInt(1, 3));
 
-					const text = (content as any).caption ?? (content as any).text ?? '';
-					const typingSpeed = randomInt(25, 30);
-					const typingDurationSec = Math.max(
-						1,
-						Math.ceil(text.length / typingSpeed),
-					);
-					const intervalSec = 2;
-					const iterations = Math.ceil(typingDurationSec / intervalSec);
+					// const text = (content as any).caption ?? (content as any).text ?? '';
+					// const typingSpeed = randomInt(25, 30);
+					// const typingDurationSec = Math.max(
+					// 	1,
+					// 	Math.ceil(text.length / typingSpeed),
+					// );
+					// const intervalSec = 2;
+					// const iterations = Math.ceil(typingDurationSec / intervalSec);
 
-					for (let i = 0; i < iterations; i++) {
-						await socket.sendPresenceUpdate('composing', jid);
-						await Bun.sleep(randomInt(3, 8) * 100);
-					}
+					// for (let i = 0; i < iterations; i++) {
+					// 	await socket.sendPresenceUpdate('composing', jid);
+					// 	await Bun.sleep(randomInt(3, 8) * 100);
+					// }
 
-					await socket.sendPresenceUpdate('available', jid);
+          await Bun.sleep(1000 * randomInt(10, 15));
+					// await socket.sendPresenceUpdate('available', jid);
 					const res = await socket.sendMessage(jid, content, options);
 
           await Bun.sleep(500 * randomInt(4, 6));
