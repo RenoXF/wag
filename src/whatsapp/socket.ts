@@ -80,7 +80,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
 	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
 	protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
-	protected _messageSendQueue = new PQueue({ concurrency: 1, interval: 60_000, intervalCap: 1, });
+	protected _messageSendQueue = new PQueue({ concurrency: 1, interval: 60_000 * 5, intervalCap: 1, });
 	protected _groupMetadataRefreshQueue = new PQueue({
 		concurrency: 1,
 		interval: 60_000,
@@ -515,7 +515,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 				try {
           this._stats.messageSent++;
 					await socket.presenceSubscribe(jid);
-					// await socket.sendPresenceUpdate('available', jid);
+					await socket.sendPresenceUpdate('available', jid);
 
 					await sleep(1000 * randomInt(1, 3));
 
@@ -534,7 +534,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 					// }
 
           await Bun.sleep(1000 * randomInt(10, 15));
-					// await socket.sendPresenceUpdate('available', jid);
+					await socket.sendPresenceUpdate('available', jid);
 					const res = await socket.sendMessage(jid, content, options);
 
           await Bun.sleep(500 * randomInt(4, 6));
