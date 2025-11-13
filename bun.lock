@@ -33,7 +33,7 @@
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-hook-form": "^7.66.0",
-        "react-router-dom": "^7.9.5",
+        "react-router-dom": "^7.9.6",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.4.0",
         "tailwindcss": "^4.1.17",
@@ -1170,9 +1170,9 @@
 
     "react-remove-scroll-bar": ["react-remove-scroll-bar@2.3.8", "", { "dependencies": { "react-style-singleton": "^2.2.2", "tslib": "^2.0.0" }, "peerDependencies": { "@types/react": "*", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" }, "optionalPeers": ["@types/react"] }, "sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q=="],
 
-    "react-router": ["react-router@7.9.5", "", { "dependencies": { "cookie": "^1.0.1", "set-cookie-parser": "^2.6.0" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" }, "optionalPeers": ["react-dom"] }, "sha512-JmxqrnBZ6E9hWmf02jzNn9Jm3UqyeimyiwzD69NjxGySG6lIz/1LVPsoTCwN7NBX2XjCEa1LIX5EMz1j2b6u6A=="],
+    "react-router": ["react-router@7.9.6", "", { "dependencies": { "cookie": "^1.0.1", "set-cookie-parser": "^2.6.0" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" }, "optionalPeers": ["react-dom"] }, "sha512-Y1tUp8clYRXpfPITyuifmSoE2vncSME18uVLgaqyxh9H35JWpIfzHo+9y3Fzh5odk/jxPW29IgLgzcdwxGqyNA=="],
 
-    "react-router-dom": ["react-router-dom@7.9.5", "", { "dependencies": { "react-router": "7.9.5" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-mkEmq/K8tKN63Ae2M7Xgz3c9l9YNbY+NHH6NNeUmLA3kDkhKXRsNb/ZpxaEunvGo2/3YXdk5EJU3Hxp3ocaBPw=="],
+    "react-router-dom": ["react-router-dom@7.9.6", "", { "dependencies": { "react-router": "7.9.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-2MkC2XSXq6HjGcihnx1s0DBWQETI4mlis4Ux7YTLvP67xnGxCvq+BcCQSO81qQHVUTM1V53tl4iVVaY5sReCOA=="],
 
     "react-style-singleton": ["react-style-singleton@2.2.3", "", { "dependencies": { "get-nonce": "^1.0.0", "tslib": "^2.0.0" }, "peerDependencies": { "@types/react": "*", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ=="],
 
