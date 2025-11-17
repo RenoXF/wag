@@ -80,7 +80,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 	protected _groupMetadataQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
 	protected _messageSaveQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
 	protected _contactsQueue = new PQueue({ concurrency: 1, timeout: 60 * 1000 * 2 });
-	protected _messageSendQueue = new PQueue({ concurrency: 1, interval: 30_000 * 5 * 1, intervalCap: 1, });
+	protected _messageSendQueue = new PQueue({ concurrency: 1, interval: 60_000 * 2, intervalCap: 1, });
 	protected _groupMetadataRefreshQueue = new PQueue({
 		concurrency: 1,
 		interval: 60_000,
