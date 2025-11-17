@@ -90,12 +90,12 @@ export abstract class Connection {
     });
 
     await DeviceTable.upsert(deviceId, {
-      webhook_url: webhookUrl || undefined,
-      name: name || undefined,
-      description: description || undefined,
-      browser: browser || undefined,
-      os: os || undefined,
-      version: version || undefined,
+      webhook_url: webhookUrl ? webhookUrl : undefined,
+      name: name ? name : undefined,
+      description: description ? description : undefined,
+      browser: browser ? browser : undefined,
+      os: os ? os : undefined,
+      version: version ? version : undefined,
       connection_state: 'connecting',
     })
 
