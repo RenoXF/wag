@@ -201,6 +201,7 @@ export class WaSocket extends EventEmitter<WhatsappEvent> {
 			},
 			generateHighQualityLinkPreview: true,
 			markOnlineOnConnect: false,
+      syncFullHistory: false,
 			msgRetryCounterCache: this._msgRetryCounterCache,
 			userDevicesCache: this._userDevicesCache,
 			placeholderResendCache: this._placeholderResendCache,
