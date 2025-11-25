@@ -33,7 +33,7 @@
 		"@radix-ui/react-separator": "^1.1.8",
 		"@radix-ui/react-slot": "^1.2.4",
 		"@radix-ui/react-tabs": "^1.1.13",
-		"@sentry/node": "^10.26.0",
+		"@sentry/node": "^10.27.0",
 		"@types/react-router-dom": "^5.3.3",
 		"audio-decode": "^2.2.3",
 		"baileys": "^7.0.0-rc.9",
