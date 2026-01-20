@@ -1,3 +1,4 @@
+import { $ } from 'bun';
 import tailwindPlugin from 'bun-plugin-tailwind';
 import { mkdirSync, rmSync } from 'node:fs';
 import { version } from 'package.json';
@@ -11,6 +12,10 @@ const platforms: Bun.CompileBuildOptions[] = [
   { target: 'bun-darwin-arm64', outfile: `wag-macos-${version}` },
 ];
 
+const gitVersion = await $`git describe --tags --always`.text();
+const buildTime = new Date().toISOString();
+const gitCommit = await $`git rev-parse HEAD`.text();
+
 for (const platform of platforms) {
   const startTime = Date.now();
   await Bun.build({
@@ -20,6 +25,14 @@ for (const platform of platforms) {
     minify: true,
     target: 'bun',
     env: 'inline',
+    define: {
+      BUILD_VERSION: JSON.stringify(gitVersion.trim()),
+      APP_VERSION: JSON.stringify(version),
+      BUILD_TIME: JSON.stringify(buildTime),
+      GIT_COMMIT: JSON.stringify(gitCommit.trim()),
+      'Bun.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.NODE_ENV': JSON.stringify('production'),
+    },
     plugins: [tailwindPlugin],
   });
 
