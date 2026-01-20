@@ -17,4 +17,4 @@ import('./server').catch((err) => {
   logger.error('Failed to start server');
 
   process.exit(1);
-})
+});

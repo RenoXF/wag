@@ -28,9 +28,7 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 process.on('SIGQUIT', shutdown);
 process.on('unhandledRejection', async (reason, promise) => {
-  logger.error(
-      reason instanceof Error ? reason.message : String(reason),
-  );
+  logger.error(reason instanceof Error ? reason.message : String(reason));
 });
 process.on('uncaughtException', async (err) => {
   logger.error(`Uncaught Exception: ${err.message}, caused by: ${err.stack}`);

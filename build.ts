@@ -1,13 +1,13 @@
 import { $ } from 'bun';
 import tailwindPlugin from 'bun-plugin-tailwind';
 import { mkdirSync, rmSync } from 'node:fs';
-import { version, description } from 'package.json';
+import { description, version } from 'package.json';
 
 rmSync('./out', { recursive: true, force: true });
 mkdirSync('./out', { recursive: true });
 
-const platforms: Bun.CompileBuildOptions[] = [
-  {
+const allPlatforms: Record<string, Bun.CompileBuildOptions> = {
+  windows: {
     target: 'bun-windows-x64',
     outfile: `wag-windows-${version}.exe`,
     windows: {
@@ -16,11 +16,22 @@ const platforms: Bun.CompileBuildOptions[] = [
       title: 'WAG - WhatsApp Gateway',
       version: version,
       icon: './assets/icon.ico',
-    }
- },
-  { target: 'bun-linux-x64', outfile: `wag-linux-${version}` },
-  { target: 'bun-darwin-arm64', outfile: `wag-macos-${version}` },
-];
+    },
+  },
+  linux: { target: 'bun-linux-x64', outfile: `wag-linux-${version}` },
+  macos: { target: 'bun-darwin-arm64', outfile: `wag-macos-${version}` },
+  'linux-arm64': {
+    target: 'bun-linux-arm64',
+    outfile: `wag-linux-arm64-musl-${version}`,
+  },
+};
+
+// Get target platform from command line argument
+const targetArg = Bun.argv[2];
+const platforms: Bun.CompileBuildOptions[] =
+  targetArg && allPlatforms[targetArg]
+    ? [allPlatforms[targetArg]]
+    : Object.values(allPlatforms);
 
 const gitVersion = await $`git describe --tags --always`.text();
 const buildTime = new Date().toISOString();
