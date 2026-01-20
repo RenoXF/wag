@@ -2,7 +2,7 @@
   "name": "wag",
   "module": "src/index.ts",
   "type": "module",
-  "version": "0.0.50",
+  "version": "0.1.0",
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
