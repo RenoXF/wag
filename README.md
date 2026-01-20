@@ -15,39 +15,54 @@ WAG adalah aplikasi gateway WhatsApp yang memungkinkan kamu untuk menghubungkan 
 - [Bun](https://bun.sh/) v1.2+ - Runtime JavaScript
 - [Elysia.js](https://elysiajs.com/) - Framework web
 - [Baileys](https://github.com/WhiskeySockets/Baileys) - Library WhatsApp Web API
-- [TypeScript](https://typescriptlang.org/) - Bahasa pemrograman
 
 ## Instalasi
 
-### Prasyarat
+Download file executable sesuai sistem operasi kamu dari [halaman releases](https://github.com/vermaysha/wag/releases):
 
-Pastikan kamu sudah menginstall [Bun](https://bun.sh/) versi 1.2 atau lebih baru.
+| Sistem Operasi | File                       |
+| -------------- | -------------------------- |
+| Windows x64    | `wag-windows-{version}.exe` |
+| Linux x64      | `wag-linux-{version}`       |
+| macOS ARM64    | `wag-macos-{version}`       |
 
-### Langkah Instalasi
+### Windows
 
-1. Clone repository
+1. Download `wag-windows-{version}.exe`
+2. Jalankan file executable
 
-```bash
-git clone <repository-url>
-cd wag
+```cmd
+wag-windows-{version}.exe
 ```
 
-1. Install dependencies
+### Linux
+
+1. Download `wag-linux-{version}`
+2. Beri permission executable
 
 ```bash
-bun install
-```
-
-1. Konfigurasi environment (opsional)
-
-```bash
-cp .env.example .env
+chmod +x wag-linux-{version}
 ```
 
 1. Jalankan aplikasi
 
 ```bash
-bun run start
+./wag-linux-{version}
+```
+
+### macOS (Apple Silicon)
+
+1. Download `wag-macos-{version}`
+2. Beri permission executable
+
+```bash
+chmod +x wag-macos-{version}
+```
+
+1. Jalankan aplikasi
+
+```bash
+./wag-macos-{version}
 ```
 
 Aplikasi akan berjalan di `http://localhost:3000` (atau port yang dikonfigurasi).
