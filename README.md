@@ -1,6 +1,6 @@
 # WAG - WhatsApp Gateway
 
-WAG adalah aplikasi gateway WhatsApp yang memungkinkan kamu untuk menghubungkan beberapa akun WhatsApp sekaligus dan mengelolanya melalui REST API. Aplikasi ini dibangun menggunakan Bun runtime dengan framework Elysia.js untuk performa yang optimal.
+WAG adalah aplikasi gateway WhatsApp yang memungkinkan kamu untuk menghubungkan beberapa akun WhatsApp sekaligus dan mengelolanya melalui REST API. Aplikasi ini dibangun menggunakan `Bun` runtime dengan framework `Elysia.js` untuk performa yang optimal.
 
 ## Fitur Utama
 
@@ -71,9 +71,74 @@ Aplikasi akan berjalan di `http://localhost:3000` (atau port yang dikonfigurasi)
 
 Konfigurasi dilakukan melalui environment variable:
 
-| Variable | Deskripsi   | Default |
-| -------- | ----------- | ------- |
-| `PORT`   | Port server | `3000`  |
+| Variable       | Deskripsi                         | Default        |
+| -------------- | --------------------------------- | -------------- |
+| `PORT`         | Port server                       | `3000`         |
+| `DB_PATH`      | Direktori penyimpanan data        | `session_data` |
+| `MAX_SESSIONS` | Maksimal jumlah sesi yang diizinkan | `100`          |
+
+---
+
+## Arsitektur Multi-Sesi
+
+WAG dirancang untuk mengelola banyak akun WhatsApp secara bersamaan dengan arsitektur yang terisolasi dan efisien.
+
+### Strategi Pemisahan Database
+
+Setiap sesi WhatsApp memiliki **database SQLite terpisah** untuk menjamin isolasi data yang sempurna:
+
+```
+session_data/
+├── main.sqlite              # Database utama (daftar koneksi)
+├── device-001/
+│   └── db.sqlite            # Database sesi device-001
+├── device-002/
+│   └── db.sqlite            # Database sesi device-002
+└── device-003/
+    └── db.sqlite            # Database sesi device-003
+```
+
+**Komponen Database:**
+
+| File | Fungsi |
+|------|--------|
+| `main.sqlite` | Menyimpan metadata semua koneksi (ID, nama, webhook URL, status, dll) |
+| `{deviceId}/db.sqlite` | Menyimpan kredensial autentikasi, kunci enkripsi, cache pesan, dan metadata grup untuk sesi tertentu |
+
+### Keuntungan Arsitektur Ini
+
+1. **Isolasi Penuh** - Data setiap akun WhatsApp tersimpan terpisah, menghindari konflik atau kebocoran data antar sesi
+2. **Performa Optimal** - Operasi database tidak saling mempengaruhi, mengurangi lock contention
+3. **Manajemen Mudah** - Menghapus sesi cukup dengan menghapus folder-nya, tanpa mempengaruhi sesi lain
+4. **Skalabilitas** - Mendukung hingga 100 sesi aktif secara bersamaan (dapat dikonfigurasi via `MAX_SESSIONS`)
+5. **Recovery Mandiri** - Jika satu database corrupt, sesi lain tetap berjalan normal
+
+### Session Manager
+
+`SessionManager` adalah komponen singleton yang mengelola seluruh lifecycle sesi:
+
+- **Startup**: Memuat semua sesi dari `main.sqlite` dan melakukan auto-reconnect
+- **Runtime**: Menyimpan instance sesi aktif dalam memory Map untuk akses cepat
+- **Persistence**: Menyimpan perubahan status ke database secara real-time
+
+---
+
+## Dokumentasi API Interaktif
+
+WAG menyediakan dokumentasi API interaktif yang dapat diakses langsung melalui browser:
+
+```
+GET /docs
+```
+
+Halaman ini menggunakan **Scalar UI** (OpenAPI) yang menampilkan:
+
+- **Daftar semua endpoint** - Semua API endpoint yang tersedia beserta method HTTP-nya
+- **Request/Response schema** - Struktur data yang diharapkan untuk setiap request dan response
+- **Try it out** - Kemampuan untuk mencoba API langsung dari browser
+- **Model definitions** - Definisi tipe data yang digunakan
+
+Cukup buka `http://localhost:3000/docs` di browser setelah aplikasi berjalan.
 
 ---
 
