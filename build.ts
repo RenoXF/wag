@@ -1,6 +1,6 @@
 import tailwindPlugin from 'bun-plugin-tailwind';
 import { mkdirSync, rmSync } from 'node:fs';
-import { version } from './package.json';
+import { version } from 'package.json';
 
 rmSync('./out', { recursive: true, force: true });
 mkdirSync('./out', { recursive: true });

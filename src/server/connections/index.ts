@@ -101,6 +101,7 @@ export const connections = new Elysia({
           // Create new session
           session = sessionManager.createSession(
             deviceId,
+            name,
             phoneNumber ?? null,
             webhookUrl ?? null,
           );

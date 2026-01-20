@@ -31,8 +31,9 @@ const getWA = (deviceId: string) => {
 export const messages = new Elysia({
   prefix: '/messages',
   detail: {
-    tags: ['messages'],
-    description: 'Endpoints to manage messages',
+    tags: ['Messages'],
+    summary: 'Messages',
+    description: 'Endpoints to send messages via WhatsApp sessions',
   },
 }).post(
   '/send-text-message',
@@ -50,6 +51,11 @@ export const messages = new Elysia({
     };
   },
   {
+    detail: {
+      summary: 'Send Text Message',
+      description:
+        'Send a text message to a WhatsApp user or group via the specified session.',
+    },
     body: t.Object({
       deviceId: t.String({
         minLength: 1,
