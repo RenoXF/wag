@@ -641,4 +641,4 @@ src/
 
 ## Lisensi
 
-Proyek ini bersifat privat dan proprietary. Semua hak dilindungi.
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).
