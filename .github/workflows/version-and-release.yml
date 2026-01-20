@@ -9,9 +9,9 @@ on:
         required: true
         type: choice
         options:
-        - patch
-        - minor
-        - major
+          - patch
+          - minor
+          - major
 
 jobs:
   release:
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "latest"
+          bun-version: 'latest'
 
       - name: Cache Bun dependencies
         uses: actions/cache@v5
@@ -66,8 +66,8 @@ jobs:
           NODE_ENV: production
           TZ: Asia/Jakarta
         run: |
-          bun typecheck
-          NODE_ENV=production TZ=Asia/Jakarta bun ./scripts/build.ts
+          bun tsc --noEmit
+          NODE_ENV=production TZ=Asia/Jakarta bun ./build.ts
 
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
