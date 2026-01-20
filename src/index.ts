@@ -1,6 +1,5 @@
 import './db';
 import { logger } from './logger';
-import './server'; // This will start the server
 import './shutdown';
 import { SessionManager } from './whatsapp';
 
@@ -10,3 +9,12 @@ logger.info('🚀 WhatsApp Gateway v2 started');
 logger.info(
   `📦 Loaded ${manager.getSessionCount()} active sessions from database`,
 );
+
+import('./server').catch((err) => {
+  if (err instanceof Error) {
+    logger.error(err.message);
+  }
+  logger.error('Failed to start server');
+
+  process.exit(1);
+})
