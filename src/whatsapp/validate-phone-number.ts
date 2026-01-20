@@ -26,7 +26,9 @@ export function validatePhoneNumber(phone: string): string {
     return phoneNumber.number.replace('+', '');
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Phone validation failed: ${error.message}`);
+      throw new Error(
+        `Phone validation failed: ${error.message} for: ${phone}`,
+      );
     }
     throw new Error(`Phone validation failed for: ${phone}`);
   }

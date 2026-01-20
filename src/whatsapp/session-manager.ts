@@ -203,9 +203,12 @@ export class SessionManager {
   /**
    * Attach event listeners to session for persistence and SSE
    */
-  private attachSessionEventListeners(session: WhatsAppSession): void {
+  private attachSessionEventListeners(
+    session: WhatsAppSession,
+    name: string | null = null,
+  ): void {
     // Save initial state
-    this.saveSessionToDatabase(session);
+    this.saveSessionToDatabase(session, name);
 
     // QR code received
     session.on('qr', (qr) => {
@@ -317,7 +320,7 @@ export class SessionManager {
     this.sessions.set(id, session);
 
     // Attach event listeners for persistence and SSE
-    this.attachSessionEventListeners(session);
+    this.attachSessionEventListeners(session, name);
 
     // Auto-cleanup when session stops permanently
     session.once('session-stopped', (reason) => {
@@ -325,7 +328,7 @@ export class SessionManager {
         `[SessionManager] Session ${id} stopped permanently (${reason}), auto-removing...`,
       );
       this.sessions.delete(id);
-      this.saveSessionToDatabase(session, name);
+      this.saveSessionToDatabase(session);
       this.updateSessionStatus(id, 'close');
       logger.info(
         `[SessionManager] Session removed (${this.sessions.size}/${MAX_SESSIONS})`,
