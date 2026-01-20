@@ -442,13 +442,13 @@ Dikirim saat proses koneksi ke WhatsApp dimulai.
 
 ---
 
-#### open
+#### ready
 
 Dikirim saat koneksi berhasil terhubung dan siap digunakan.
 
 ```json
 {
-  "event": "open",
+  "event": "ready",
   "data": {}
 }
 ```
@@ -574,7 +574,7 @@ app.post('/webhook', (req, res) => {
     case 'connecting':
       console.log('Menghubungkan ke WhatsApp...');
       break;
-    case 'open':
+    case 'ready':
       console.log('WhatsApp siap digunakan!');
       break;
     case 'state':

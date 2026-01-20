@@ -636,7 +636,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.logger.info('Connected to WhatsApp');
 
             this.emit('authenticated', sock);
-            this.sendWebhook('open', {});
+            this.sendWebhook('ready', {});
 
             this.pruneJob = new Cron('0 0 * * *', () => {
               this.pruneOldMessages(30);
