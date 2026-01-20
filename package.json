@@ -1,65 +1,51 @@
 {
-	"name": "wag",
-	"module": "src/index.ts",
-	"type": "module",
-	"version": "0.0.50",
-	"private": true,
-	"devDependencies": {
-		"@biomejs/biome": "2.3.11",
-		"@types/bun": "^1.3.6",
-		"@types/node": "^25.0.9",
-		"@types/qrcode-generator": "^1.0.6",
-		"@types/react": "^19.2.8",
-		"@types/react-dom": "^19.2.3",
-		"shadcn": "^3.7.0"
-	},
-	"peerDependencies": {
-		"typescript": "^5.9.2"
-	},
-	"scripts": {
-		"format": "biome check --write",
-		"start": "NODE_ENV=production bun src/index.ts",
-		"typecheck": "tsc --noEmit",
-		"bundle": "bun typecheck && NODE_ENV=production TZ=Asia/Jakarta bun ./scripts/build.ts"
-	},
-	"dependencies": {
-		"@elysiajs/cron": "^1.4.1",
-		"@elysiajs/eden": "^1.4.6",
-		"@elysiajs/swagger": "^1.3.1",
-		"@radix-ui/react-dialog": "^1.1.15",
-		"@radix-ui/react-label": "^2.1.8",
-		"@radix-ui/react-scroll-area": "^1.2.10",
-		"@radix-ui/react-select": "^2.2.6",
-		"@radix-ui/react-separator": "^1.1.8",
-		"@radix-ui/react-slot": "^1.2.4",
-		"@radix-ui/react-tabs": "^1.1.13",
-		"@sentry/node": "^10.35.0",
-		"@types/react-router-dom": "^5.3.3",
-		"audio-decode": "^2.2.3",
-		"baileys": "^7.0.0-rc.9",
-		"bun-plugin-tailwind": "^0.1.2",
-		"class-variance-authority": "^0.7.1",
-		"clsx": "^2.1.1",
-		"elysia": "^1.4.22",
-		"jimp": "^1.6.0",
-		"link-preview-js": "^4.0.0",
-		"lucide-react": "^0.562.0",
-		"next-themes": "^0.4.6",
-		"p-queue": "^9.1.0",
-		"pino-pretty": "^13.1.3",
-		"pino-sentry-transport": "^1.6.0",
-		"qrcode-generator": "^2.0.4",
-		"react": "^19.2.3",
-		"react-dom": "^19.2.3",
-		"react-hook-form": "^7.71.1",
-		"react-router-dom": "^7.12.0",
-		"sonner": "^2.0.7",
-		"tailwind-merge": "^3.4.0",
-		"tailwindcss": "^4.1.18",
-		"tailwindcss-animate": "^1.0.7"
-	},
-	"trustedDependencies": [
-		"baileys",
-		"protobufjs"
-	]
+  "name": "wag",
+  "module": "src/index.ts",
+  "type": "module",
+  "version": "0.0.50",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.0.9",
+    "bun-plugin-tailwind": "^0.1.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "pino-pretty": "^13.1.3",
+    "prettier": "^3.8.0",
+    "prettier-plugin-organize-imports": "^4.3.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "lint": "prettier --check ."
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "all",
+    "printWidth": 80,
+    "plugins": [
+      "prettier-plugin-organize-imports"
+    ],
+    "organizeImportsSkipDestructiveCodeActions": true
+  },
+  "dependencies": {
+    "baileys": "^7.0.0-rc.9",
+    "croner": "^9.1.0",
+    "elysia": "^1.4.22",
+    "jimp": "^1.6.0",
+    "libphonenumber-js": "^1.12.34",
+    "rotating-file-stream": "^3.2.7"
+  },
+  "trustedDependencies": [
+    "baileys",
+    "protobufjs"
+  ]
 }

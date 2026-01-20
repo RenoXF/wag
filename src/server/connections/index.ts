@@ -1,186 +1,388 @@
-import { Elysia } from 'elysia';
-import { cron } from '@elysiajs/cron'
-import { ConnectionModel } from './model';
-import { Connection } from './service';
+import { logger } from '@/logger';
+import { SessionManager } from '@/whatsapp/session-manager';
+import { Elysia, sse, t } from 'elysia';
+
+const sessionManager = SessionManager.getInstance();
 
 export const connections = new Elysia({
-	prefix: '/connections',
-	detail: {
-		tags: ['Connections'],
-		description: 'Endpoints to manage connections',
-	},
+  prefix: '/connections',
+  detail: {
+    tags: ['Connections'],
+    description: 'Endpoints to manage connections',
+  },
 })
-  .use(cron({
-    name: 'set-online',
-    pattern: '0 0 * * *',
-    async run() {
-      const devices = await Connection.getAll();
-      for (const device of devices) {
-        const id = device.deviceId;
+  // List all connections
+  .get(
+    '/',
+    () => {
+      const sessions = sessionManager.getAllSessionsFromDB();
+      return {
+        success: true,
+        data: sessions,
+        count: sessions.length,
+      };
+    },
+    {
+      detail: {
+        summary: 'List all connections',
+        description: 'Get all WhatsApp connections from database',
+      },
+    },
+  )
 
-        Connection.setOnline({ deviceId: id });
+  // Get single connection
+  .get(
+    '/:id',
+    ({ params: { id }, set }) => {
+      const session = sessionManager.getSessionFromDB(id);
+      if (!session) {
+        set.status = 404;
+        return { success: false, message: 'Connection not found' };
       }
-    }
-  }))
-	.get(
-		'/',
-		async () => {
-			const data = await Connection.getAll();
 
-			return {
-				data: data,
-			};
-		},
-		{
-			detail: {
-				summary: 'Get all active connections',
-				description:
-					'Retrieve a list of all active connections with their details.',
-			},
-		},
-	)
-	.post(
-		'/start',
-		async ({ body, set }) => {
-			if (Connection.has({ deviceId: body.deviceId })) {
-				set.status = 400;
+      const activeSession = sessionManager.getSession(id);
+      return {
+        success: true,
+        data: {
+          ...session,
+          isActive: !!activeSession,
+          currentStatus: activeSession?.getStatus(),
+        },
+      };
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      detail: {
+        summary: 'Get connection by ID',
+        description: 'Get a specific WhatsApp connection',
+      },
+    },
+  )
 
-				return { error: 'Connection already exists' };
-			}
-			const webhookUrl = body.webhookUrl;
-
-			if (webhookUrl) {
-				try {
-					const res = await fetch(webhookUrl, {
-						method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ event: 'ping', data: { deviceId: body.deviceId } }),
-            signal: AbortSignal.timeout(5000) // 5 seconds timeout
-					});
-
-					if (!res.ok) {
-						set.status = 400;
-
-						return { error: 'Webhook URL must be return 200 HTTP Code' };
-					}
-				} catch (error) {
-					set.status = 400;
-
-					return error instanceof Error
-						? { error: 'Invalid webhook URL', message: error.message }
-						: { error: 'Invalid webhook URL' };
-				}
-			}
-
-			Connection.start(body);
-
-			return {
-				message: 'Connection started',
-			};
-		},
-		{
-			body: ConnectionModel.Start,
-			detail: {
-				summary: 'Start a new connections',
-				description:
-					'Initiate a new connection with the provided device ID and optional webhook URL.',
-			},
-		},
-	)
-	.post(
-		'/stop',
-		async ({ body, set }) => {
-			if (!Connection.has({ deviceId: body.deviceId })) {
-				set.status = 400;
-				return { error: 'Connection not found' };
-			}
-
-			Connection.stop(body);
-
-			return {
-				message: 'Connection stopped',
-			};
-		},
-		{
-			body: ConnectionModel.Default,
-			detail: {
-				summary: 'Stop an active connection',
-				description:
-					'Terminate an existing connection using the provided device ID.',
-			},
-		},
-	)
-	.post(
-		'/logout',
-		async ({ body, set }) => {
-			if (!Connection.has({ deviceId: body.deviceId })) {
-				set.status = 400;
-				return { error: 'Connection not found' };
-			}
-
-			Connection.logout(body);
-
-			return {
-				message: 'Connection logged out',
-			};
-		},
-		{
-			body: ConnectionModel.Default,
-			detail: {
-				summary: 'Logout from an active connection',
-				description:
-					'Log out from an existing connection using the provided device ID.',
-			},
-		},
-	)
-	.post(
-		'/qr-code',
-		async ({ body, set }) => {
-			if (!Connection.has({ deviceId: body.deviceId })) {
-				set.status = 400;
-				return { error: 'Connection not found' };
-			}
-
-			const qrData = await Connection.getQrCode(body);
-
-			if (!qrData) {
-				set.status = 400;
-				return { error: 'QR code not available' };
-			}
-
-			return {
-				data: qrData,
-			};
-		},
-		{
-			body: ConnectionModel.Default,
-			detail: {
-				summary: 'Get QR code for a connection',
-				description:
-					'Retrieve the QR code for an existing connection if available.',
-			},
-		},
-	)
+  // Start/Create a new connection
   .post(
-		'/set-online',
-		async ({ body, set }) => {
-			if (!Connection.has({ deviceId: body.deviceId })) {
-				set.status = 400;
-				return { error: 'Connection not found' };
-			}
+    '/start',
+    async ({ body, set }) => {
+      try {
+        const { deviceId, phoneNumber, webhookUrl, name } = body;
 
-			const status = await Connection.setOnline(body);
+        if (webhookUrl) {
+          try {
+            const res = await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event: 'ping',
+                data: { deviceId: body.deviceId },
+              }),
+              signal: AbortSignal.timeout(5000), // 5 seconds timeout
+            });
 
-			return {
-				data: status,
-			};
-		},
-		{
-			body: ConnectionModel.Default,
-			detail: {
-				summary: 'Get QR code for a connection',
-				description:
-					'Retrieve the QR code for an existing connection if available.',
-			},
-		},
-	);
+            if (!res.ok) {
+              set.status = 400;
+
+              return { error: 'Webhook URL must be return 200 HTTP Code' };
+            }
+          } catch (error) {
+            set.status = 400;
+
+            return error instanceof Error
+              ? { error: 'Invalid webhook URL', message: error.message }
+              : { error: 'Invalid webhook URL' };
+          }
+        }
+
+        // Check if session already exists
+        let session = sessionManager.getSession(deviceId);
+
+        if (!session) {
+          // Create new session
+          session = sessionManager.createSession(
+            deviceId,
+            phoneNumber ?? null,
+            webhookUrl ?? null,
+          );
+        }
+
+        // Connect the session
+        session.connect(phoneNumber ?? null, webhookUrl ?? null);
+
+        return {
+          success: true,
+          message: 'Connection started successfully',
+          data: session.getStatus(),
+        };
+      } catch (err) {
+        logger.error({ err }, '[API] Error starting connection');
+        set.status = 400;
+        return {
+          success: false,
+          message:
+            err instanceof Error ? err.message : 'Failed to start connection',
+        };
+      }
+    },
+    {
+      body: t.Object({
+        deviceId: t.String({
+          minLength: 1,
+        }),
+        webhookUrl: t.Optional(
+          t.Nullable(
+            t.Optional(
+              t.String({
+                format: 'uri',
+              }),
+            ),
+          ),
+        ),
+        name: t.Optional(t.Nullable(t.String({ minLength: 1 }))),
+        phoneNumber: t.Optional(t.String()),
+      }),
+      detail: {
+        summary: 'Start a connection',
+        description: 'Create and start a new WhatsApp connection',
+      },
+    },
+  )
+
+  // Stop a connection
+  .post(
+    '/stop',
+    async ({ body: { deviceId: id }, set }) => {
+      try {
+        const removed = await sessionManager.removeSession(id);
+        if (!removed) {
+          set.status = 404;
+          return {
+            success: false,
+            message: 'Connection not found or already stopped',
+          };
+        }
+
+        return {
+          success: true,
+          message: 'Connection stopped successfully',
+        };
+      } catch (err) {
+        set.status = 500;
+        return {
+          success: false,
+          message: 'Failed to stop connection',
+        };
+      }
+    },
+    {
+      body: t.Object({
+        deviceId: t.String({
+          minLength: 1,
+        }),
+      }),
+      detail: {
+        summary: 'Stop a connection',
+        description: 'Stop and disconnect a WhatsApp connection',
+      },
+    },
+  )
+
+  // Logout and delete session
+  .post(
+    '/logout',
+    async ({ body: { deviceId: id }, set }) => {
+      try {
+        const session = sessionManager.getSession(id);
+        if (session) {
+          await session.logout(); // This will delete auth data
+          await sessionManager.removeSession(id);
+        }
+
+        // Delete from database
+        sessionManager.deleteSessionFromDB(id);
+
+        return {
+          success: true,
+          message: 'Session logged out and deleted',
+        };
+      } catch (err) {
+        set.status = 500;
+        return {
+          success: false,
+          message: 'Failed to logout session',
+        };
+      }
+    },
+    {
+      body: t.Object({
+        deviceId: t.String({
+          minLength: 1,
+        }),
+      }),
+      detail: {
+        summary: 'Logout and delete session',
+        description: 'Logout from WhatsApp and delete all session data',
+      },
+    },
+  )
+
+  // Get QR code for a session
+  .get(
+    '/qr-code',
+    ({ query: { deviceId: id }, set }) => {
+      const session = sessionManager.getSession(id);
+      if (!session) {
+        set.status = 404;
+        return { success: false, message: 'Session not found' };
+      }
+
+      const qrCode = session.getQrCode();
+      const pairingCode = session.getPairingCode();
+
+      return {
+        success: true,
+        data: {
+          qrCode,
+          pairingCode,
+          hasQrCode: qrCode !== null,
+          hasPairingCode: pairingCode !== null,
+        },
+      };
+    },
+    {
+      query: t.Object({
+        deviceId: t.String({
+          minLength: 1,
+        }),
+      }),
+      detail: {
+        summary: 'Get QR/Pairing code',
+        description:
+          'Get the current QR code or pairing code for authentication',
+      },
+    },
+  )
+
+  // SSE endpoint for real-time session events
+  // .get(
+  //   '/events/:id',
+  //   async function* ({ params: { id } }) {
+  //     const session = sessionManager.getSession(id);
+  //     if (!session) {
+  //       yield sse({
+  //         event: 'error',
+  //         data: { message: 'Session not found' },
+  //       });
+  //       return;
+  //     }
+
+  //     // Send initial status
+  //     yield sse({
+  //       event: 'connected',
+  //       data: {
+  //         message: 'SSE stream connected',
+  //         status: session.getStatus(),
+  //       },
+  //     });
+
+  //     // Create a queue for events
+  //     const eventQueue: any[] = [];
+  //     let resolveNext: ((value: any) => void) | null = null;
+
+  //     const send = (data: any) => {
+  //       if (resolveNext) {
+  //         resolveNext(data);
+  //         resolveNext = null;
+  //       } else {
+  //         eventQueue.push(data);
+  //       }
+  //     };
+
+  //     // Subscribe to session events
+  //     const unsubscribe = sessionManager.subscribeToSSE(id, send);
+
+  //     try {
+  //       // Stream events as they come
+  //       while (true) {
+  //         let data: any;
+
+  //         if (eventQueue.length > 0) {
+  //           data = eventQueue.shift();
+  //         } else {
+  //           // Wait for next event
+  //           data = await new Promise((resolve) => {
+  //             resolveNext = resolve;
+  //           });
+  //         }
+
+  //         yield sse({
+  //           event: data.event,
+  //           data: data.data,
+  //         });
+  //       }
+  //     } finally {
+  //       // Cleanup on disconnect
+  //       unsubscribe();
+  //     }
+  //   },
+  //   {
+  //     params: t.Object({
+  //       id: t.String(),
+  //     }),
+  //     detail: {
+  //       summary: 'SSE events stream',
+  //       description:
+  //         'Subscribe to real-time events for a session (QR codes, authentication, errors, etc.)',
+  //     },
+  //   },
+  // )
+
+  // Set online status
+  .post(
+    '/set-online',
+    async ({ body, set }) => {
+      const id = body.deviceId;
+      const session = sessionManager.getSession(id);
+      if (!session) {
+        set.status = 404;
+        return { success: false, message: 'Session not found' };
+      }
+
+      const socket = session.getSocket();
+      if (!socket) {
+        set.status = 400;
+        return {
+          success: false,
+          message: 'Session not connected',
+        };
+      }
+
+      try {
+        await socket.sendPresenceUpdate(
+          body.online ? 'available' : 'unavailable',
+        );
+        return {
+          success: true,
+          message: `Presence set to ${body.online ? 'online' : 'offline'}`,
+        };
+      } catch (err) {
+        set.status = 500;
+        return {
+          success: false,
+          message: 'Failed to update presence',
+        };
+      }
+    },
+    {
+      body: t.Object({
+        deviceId: t.String({
+          minLength: 1,
+        }),
+        online: t.Boolean(),
+      }),
+      detail: {
+        summary: 'Set online status',
+        description: 'Set the online/offline status for a WhatsApp session',
+      },
+    },
+  );
