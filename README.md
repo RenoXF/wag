@@ -56,9 +56,9 @@ Aplikasi akan berjalan di `http://localhost:3000` (atau port yang dikonfigurasi)
 
 Konfigurasi dilakukan melalui environment variable:
 
-| Variable | Deskripsi | Default |
-|----------|-----------|---------|
-| `PORT` | Port server | `3000` |
+| Variable | Deskripsi   | Default |
+| -------- | ----------- | ------- |
+| `PORT`   | Port server | `3000`  |
 
 ---
 
@@ -135,12 +135,12 @@ POST /connections/start
 
 **Request Body:**
 
-| Field | Tipe | Wajib | Deskripsi |
-|-------|------|-------|-----------|
-| `deviceId` | string | Ya | ID unik untuk device/sesi |
+| Field         | Tipe   | Wajib | Deskripsi                                                |
+| ------------- | ------ | ----- | -------------------------------------------------------- |
+| `deviceId`    | string | Ya    | ID unik untuk device/sesi                                |
 | `phoneNumber` | string | Tidak | Nomor telepon untuk pairing code (format: 6281234567890) |
-| `webhookUrl` | string | Tidak | URL webhook untuk menerima notifikasi |
-| `name` | string | Tidak | Nama untuk identifikasi koneksi |
+| `webhookUrl`  | string | Tidak | URL webhook untuk menerima notifikasi                    |
+| `name`        | string | Tidak | Nama untuk identifikasi koneksi                          |
 
 **Contoh Request:**
 
@@ -298,20 +298,20 @@ POST /messages/send-text-message
 
 **Request Body:**
 
-| Field | Tipe | Wajib | Deskripsi |
-|-------|------|-------|-----------|
-| `deviceId` | string | Ya | ID device yang digunakan untuk mengirim |
-| `recipient` | string | Ya | JID penerima (lihat format di bawah) |
-| `message` | string | Ya | Isi pesan (maksimal 4096 karakter) |
-| `id` | string | Tidak | ID pesan kustom (otomatis di-generate jika tidak disertakan) |
+| Field       | Tipe   | Wajib | Deskripsi                                                    |
+| ----------- | ------ | ----- | ------------------------------------------------------------ |
+| `deviceId`  | string | Ya    | ID device yang digunakan untuk mengirim                      |
+| `recipient` | string | Ya    | JID penerima (lihat format di bawah)                         |
+| `message`   | string | Ya    | Isi pesan (maksimal 4096 karakter)                           |
+| `id`        | string | Tidak | ID pesan kustom (otomatis di-generate jika tidak disertakan) |
 
 **Format JID Penerima:**
 
-| Tipe | Format | Contoh |
-|------|--------|--------|
+| Tipe            | Format                   | Contoh                         |
+| --------------- | ------------------------ | ------------------------------ |
 | Kontak personal | `{nomor}@s.whatsapp.net` | `6281234567890@s.whatsapp.net` |
-| Grup | `{groupId}@g.us` | `120363123456789@g.us` |
-| LID (Linked ID) | `{lid}@lid` | `123456789@lid` |
+| Grup            | `{groupId}@g.us`         | `120363123456789@g.us`         |
+| LID (Linked ID) | `{lid}@lid`              | `123456789@lid`                |
 
 **Contoh Request:**
 
@@ -405,8 +405,10 @@ Dikirim saat QR code atau pairing code tersedia untuk autentikasi.
 {
   "event": "auth",
   "data": {
-    "via": "qr_code",
-    "data": "2@abc123..."
+    "auth": {
+      "via": "qr_code",
+      "data": "2@abc123..."
+    }
   }
 }
 ```
@@ -417,25 +419,37 @@ Dikirim saat QR code atau pairing code tersedia untuk autentikasi.
 {
   "event": "auth",
   "data": {
-    "via": "pair_code",
-    "data": "ABCD-EFGH"
+    "auth": {
+      "via": "pair_code",
+      "data": "ABCD-EFGH"
+    }
   }
 }
 ```
 
 ---
 
-#### ready
+#### connecting
+
+Dikirim saat proses koneksi ke WhatsApp dimulai.
+
+```json
+{
+  "event": "connecting",
+  "data": {}
+}
+```
+
+---
+
+#### open
 
 Dikirim saat koneksi berhasil terhubung dan siap digunakan.
 
 ```json
 {
-  "event": "ready",
-  "data": {
-    "event": "ready",
-    "data": {}
-  }
+  "event": "open",
+  "data": {}
 }
 ```
 
@@ -443,20 +457,16 @@ Dikirim saat koneksi berhasil terhubung dan siap digunakan.
 
 #### state
 
-Dikirim saat status koneksi berubah.
+Dikirim saat status koneksi berubah. Field `data` berisi string status koneksi.
 
 ```json
 {
   "event": "state",
-  "data": {
-    "data": {
-      "state": "open"
-    }
-  }
+  "data": "open"
 }
 ```
 
-**Kemungkinan nilai state:**
+**Kemungkinan nilai:**
 
 - `connecting` - Sedang menghubungkan
 - `open` - Terhubung dan siap
@@ -480,19 +490,19 @@ Dikirim saat koneksi tertutup. Berisi informasi alasan dan apakah akan reconnect
 
 **Kemungkinan alasan:**
 
-| Reason | isRestart | Deskripsi |
-|--------|-----------|-----------|
-| WhatsApp Service is Unavailable | `true` | Layanan WhatsApp tidak tersedia, akan reconnect |
-| Connection Forbidden | `false` | Kredensial tidak valid, perlu login ulang |
-| Bad Session File | `false` | File sesi rusak, perlu scan ulang |
-| Connection closed | `true` | Koneksi tertutup, akan reconnect |
-| Connection Lost from Server | `true` | Koneksi terputus dari server, akan reconnect |
-| Connection Replaced | `false` | Sesi digantikan sesi baru, perlu login ulang |
-| Device Logged Out | `false` | Perangkat logout, perlu scan ulang |
-| Restart Required | `true` | Perlu restart, akan reconnect |
-| Multi-device Mismatch | `false` | Konflik multi-device, perlu scan ulang |
-| Session disconnected by user | `false` | Diputus oleh user |
-| Process timeout reached | `false` | Timeout karena tidak ada aktivitas |
+| Reason                          | isRestart | Deskripsi                                       |
+| ------------------------------- | --------- | ----------------------------------------------- |
+| WhatsApp Service is Unavailable | `true`    | Layanan WhatsApp tidak tersedia, akan reconnect |
+| Connection Forbidden            | `false`   | Kredensial tidak valid, perlu login ulang       |
+| Bad Session File                | `false`   | File sesi rusak, perlu scan ulang               |
+| Connection closed               | `true`    | Koneksi tertutup, akan reconnect                |
+| Connection Lost from Server     | `true`    | Koneksi terputus dari server, akan reconnect    |
+| Connection Replaced             | `false`   | Sesi digantikan sesi baru, perlu login ulang    |
+| Device Logged Out               | `false`   | Perangkat logout, perlu scan ulang              |
+| Restart Required                | `true`    | Perlu restart, akan reconnect                   |
+| Multi-device Mismatch           | `false`   | Konflik multi-device, perlu scan ulang          |
+| Session disconnected by user    | `false`   | Diputus oleh user                               |
+| Process timeout reached         | `false`   | Timeout karena tidak ada aktivitas              |
 
 ---
 
@@ -546,23 +556,29 @@ app.use(express.json());
 app.post('/webhook', (req, res) => {
   const { event, data } = req.body;
   const sessionId = req.headers['x-session-id'];
-  
+
   console.log(`[${sessionId}] Event: ${event}`);
   console.log('Data:', JSON.stringify(data, null, 2));
-  
+
   switch (event) {
     case 'ping':
       console.log('Webhook validation received');
       break;
     case 'auth':
-      if (data.via === 'qr_code') {
+      if (data.auth.via === 'qr_code') {
         console.log('QR Code tersedia, silakan scan');
-      } else if (data.via === 'pair_code') {
-        console.log('Pairing code:', data.data);
+      } else if (data.auth.via === 'pair_code') {
+        console.log('Pairing code:', data.auth.data);
       }
       break;
-    case 'ready':
+    case 'connecting':
+      console.log('Menghubungkan ke WhatsApp...');
+      break;
+    case 'open':
       console.log('WhatsApp siap digunakan!');
+      break;
+    case 'state':
+      console.log(`Status koneksi: ${data}`);
       break;
     case 'message_sent':
       console.log(`Pesan terkirim ke ${data.recipient}`);
@@ -577,7 +593,7 @@ app.post('/webhook', (req, res) => {
       }
       break;
   }
-  
+
   res.status(200).json({ received: true });
 });
 

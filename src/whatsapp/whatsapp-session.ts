@@ -379,8 +379,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.qrCode = qr;
             this.emit('qr', qr);
             this.sendWebhook('auth', {
-              via: 'qr_code',
-              data: qr,
+              auth: {
+                via: 'qr_code',
+                data: qr,
+              },
             });
 
             this.logger.info(
@@ -403,8 +405,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 this.pairingCode = code;
                 this.emit('pairing-code', code);
                 this.sendWebhook('auth', {
-                  via: 'pair_code',
-                  data: code,
+                  auth: {
+                    via: 'pair_code',
+                    data: code,
+                  },
                 });
               } catch (error) {
                 this.logger.error({ error }, 'Failed to request pairing code');
@@ -632,10 +636,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.logger.info('Connected to WhatsApp');
 
             this.emit('authenticated', sock);
-            this.sendWebhook('ready', {
-              event: 'ready',
-              data: {},
-            });
+            this.sendWebhook('open', {});
 
             this.pruneJob = new Cron('0 0 * * *', () => {
               this.pruneOldMessages(30);
@@ -645,13 +646,13 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.qrCode = null;
             this.pairingCode = null;
             this.logger.info('Connecting to WhatsApp');
+
+            this.sendWebhook('connecting', {});
           }
 
           if (connection) {
             this._connectionState = connection;
-            this.sendWebhook('state', {
-              data: { state },
-            });
+            this.sendWebhook('state', connection);
           }
         });
 
@@ -851,10 +852,15 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.webhookMutex.runExclusive(async () => {
       if (!this.webhookUrl) return;
 
+      const body = JSON.stringify({
+        event: event,
+        data: data,
+      });
+
       try {
         const response = await fetch(this.webhookUrl, {
           method: 'POST',
-          signal: AbortSignal.timeout(10_000),
+          signal: AbortSignal.timeout(3_000),
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': `WAG-WhatsAppSession/${this.sessionId}`,
@@ -862,7 +868,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             'X-Event': event,
             'X-Timestamp': new Date().toISOString(),
           },
-          body: JSON.stringify({ event, data }),
+          body: body,
         });
 
         if (!response.ok) {
