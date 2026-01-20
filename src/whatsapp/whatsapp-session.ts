@@ -642,10 +642,13 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.pruneJob = new Cron('0 0 * * *', () => {
               this.pruneOldMessages(30);
             });
-            this.heartbeatInterval = setInterval(() => {
-              // send heartbeat webhook
-              this.sendWebhook('ready', {});
-            }, 1000 * 60 * 30); // every 30 minutes
+            this.heartbeatInterval = setInterval(
+              () => {
+                // send heartbeat webhook
+                this.sendWebhook('ready', {});
+              },
+              1000 * 60 * 30,
+            ); // every 30 minutes
             return resolve(sock);
           } else if (connection === 'connecting') {
             this.qrCode = null;

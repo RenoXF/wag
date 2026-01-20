@@ -20,8 +20,8 @@ WAG adalah aplikasi gateway WhatsApp yang memungkinkan kamu untuk menghubungkan 
 
 Download file executable sesuai sistem operasi kamu dari [halaman releases](https://github.com/vermaysha/wag/releases):
 
-| Sistem Operasi | File                       |
-| -------------- | -------------------------- |
+| Sistem Operasi | File                        |
+| -------------- | --------------------------- |
 | Windows x64    | `wag-windows-{version}.exe` |
 | Linux x64      | `wag-linux-{version}`       |
 | macOS ARM64    | `wag-macos-{version}`       |
