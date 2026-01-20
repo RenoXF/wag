@@ -1,13 +1,23 @@
 import { $ } from 'bun';
 import tailwindPlugin from 'bun-plugin-tailwind';
 import { mkdirSync, rmSync } from 'node:fs';
-import { version } from 'package.json';
+import { version, description } from 'package.json';
 
 rmSync('./out', { recursive: true, force: true });
 mkdirSync('./out', { recursive: true });
 
 const platforms: Bun.CompileBuildOptions[] = [
-  { target: 'bun-windows-x64', outfile: `wag-windows-${version}.exe` },
+  {
+    target: 'bun-windows-x64',
+    outfile: `wag-windows-${version}.exe`,
+    windows: {
+      copyright: `© ${new Date().getFullYear()} Vermaysha`,
+      description: description,
+      title: 'WAG - WhatsApp Gateway',
+      version: version,
+      icon: './assets/icon.ico',
+    }
+ },
   { target: 'bun-linux-x64', outfile: `wag-linux-${version}` },
   { target: 'bun-darwin-arm64', outfile: `wag-macos-${version}` },
 ];
