@@ -66,6 +66,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
   private qrCode: string | null = null;
   private pairingCode: string | null = null;
   private timeout: NodeJS.Timeout | undefined = undefined;
+  private heartbeatInterval: NodeJS.Timeout | undefined = undefined;
 
   private messageMutex = new Mutex();
   private webhookMutex = new Mutex();
@@ -641,6 +642,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.pruneJob = new Cron('0 0 * * *', () => {
               this.pruneOldMessages(30);
             });
+            this.heartbeatInterval = setInterval(() => {
+              // send heartbeat webhook
+              this.sendWebhook('ready', {});
+            }, 1000 * 60 * 30); // every 30 minutes
             return resolve(sock);
           } else if (connection === 'connecting') {
             this.qrCode = null;
@@ -718,6 +723,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.pruneJob = null;
     this.messageMutex.cancel();
     this._connectionState = 'close';
+    clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = undefined;
   }
 
   async logout(): Promise<void> {
