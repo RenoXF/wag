@@ -94,6 +94,9 @@ export const connections = new Elysia({
           }
         }
 
+        // get old session from db
+        const oldSession = sessionManager.getSessionFromDB(deviceId);
+
         // Check if session already exists
         let session = sessionManager.getSession(deviceId);
 
@@ -101,9 +104,9 @@ export const connections = new Elysia({
           // Create new session
           session = sessionManager.createSession(
             deviceId,
-            name,
-            phoneNumber ?? null,
-            webhookUrl ?? null,
+            name ?? oldSession?.name ?? deviceId,
+            phoneNumber ?? oldSession?.phoneNumber ?? null,
+            webhookUrl ?? oldSession?.webhookUrl ?? null,
           );
         }
 
