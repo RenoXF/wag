@@ -53,7 +53,7 @@ jobs:
           echo "new_version_tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Upload package.json
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: package-json
           path: package.json
@@ -119,7 +119,7 @@ jobs:
         run: bun ./build.ts ${{ matrix.target }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: binary-${{ matrix.target }}
           path: ./out/*
