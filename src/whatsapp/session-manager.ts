@@ -235,7 +235,7 @@ export class SessionManager {
       : null;
 
     // Check if session already exists
-    if (this.sessions.has(id)) {
+    if (this.getSession(id)) {
       throw new Error(`Session already exists for id: ${id}`);
     }
 
@@ -273,7 +273,14 @@ export class SessionManager {
 
   getSession(id: string): WhatsAppSession | undefined {
     try {
-      return this.sessions.get(id);
+      const session = this.sessions.get(id);
+
+      if (session?.getIsLoggedIn()) {
+        return session;
+      }
+
+      this.sessions.delete(id);
+      return undefined;
     } catch (error) {
       return undefined;
     }
