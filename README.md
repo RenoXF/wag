@@ -2,6 +2,12 @@
 
 WAG adalah aplikasi gateway WhatsApp yang memungkinkan kamu untuk menghubungkan beberapa akun WhatsApp sekaligus dan mengelolanya melalui REST API. Aplikasi ini dibangun menggunakan `Bun` runtime dengan framework `Elysia.js` untuk performa yang optimal.
 
+![WAG - Whatsapp Gateway](./assets/example-home.png "WAG - Whatsapp Gateway")
+Homepage
+
+![WAG - Whatsapp Gateway](./assets/example-docs.png "WAG - Whatsapp Gateway")
+Documentation
+
 ## Fitur Utama
 
 - **Multi-sesi WhatsApp** - Hubungkan beberapa akun WhatsApp dalam satu aplikasi
