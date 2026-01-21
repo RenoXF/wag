@@ -116,7 +116,15 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
    * Get current authentication status
    */
   getIsLoggedIn(): boolean {
-    return this.isLoggedIn;
+    return this.isLoggedIn || this._connectionState === 'open';
+  }
+
+  getIsConnecting(): boolean {
+    return this._connectionState === 'connecting';
+  }
+
+  getIsClosed(): boolean {
+    return this._connectionState === 'close';
   }
 
   /**

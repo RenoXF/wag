@@ -275,7 +275,7 @@ export class SessionManager {
     try {
       const session = this.sessions.get(id);
 
-      if (session?.getIsLoggedIn()) {
+      if (session?.getIsConnecting() || session?.getIsLoggedIn()) {
         return session;
       }
 
