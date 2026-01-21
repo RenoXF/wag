@@ -11,7 +11,12 @@
     "url": "https://vermaysha.com"
   },
   "homepage": "https://github.com/vermaysha/wag",
-  "keywords": ["whatsapp-server", "whatsapp-api-server", "whatsapp-api", "whatsapp-gateway"],
+  "keywords": [
+    "whatsapp-server",
+    "whatsapp-api-server",
+    "whatsapp-api",
+    "whatsapp-gateway"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/vermaysha/wag.git"

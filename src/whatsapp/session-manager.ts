@@ -20,7 +20,6 @@ interface SessionState {
 export class SessionManager {
   private static instance: SessionManager;
   private sessions: Map<string, WhatsAppSession> = new Map();
-  private sseClients: Map<string, Set<(data: any) => void>> = new Map();
 
   private constructor() {
     this.loadSessionsFromDatabase();
@@ -176,31 +175,6 @@ export class SessionManager {
   }
 
   /**
-   * Broadcast SSE event to all listening clients for a session
-   */
-  private broadcastSSE(sessionId: string, event: string, data: any): void {
-    const clients = this.sseClients.get(sessionId);
-    if (!clients || clients.size === 0) return;
-
-    const payload = {
-      event,
-      data: {
-        sessionId,
-        timestamp: new Date().toISOString(),
-        ...data,
-      },
-    };
-
-    for (const send of clients) {
-      try {
-        send(payload);
-      } catch (err) {
-        logger.error({ err }, '[SessionManager] Error sending SSE to client');
-      }
-    }
-  }
-
-  /**
    * Attach event listeners to session for persistence and SSE
    */
   private attachSessionEventListeners(
@@ -212,79 +186,34 @@ export class SessionManager {
 
     // QR code received
     session.on('qr', (qr) => {
+      this.sessions.set(session.id, session);
       this.saveSessionToDatabase(session);
-      this.broadcastSSE(session.id, 'qr', { qrCode: qr });
     });
 
     // Pairing code received
     session.on('pairing-code', (code) => {
+      this.sessions.set(session.id, session);
       this.saveSessionToDatabase(session);
-      this.broadcastSSE(session.id, 'pairing-code', { pairingCode: code });
     });
 
     // Authenticated
     session.on('authenticated', () => {
+      this.sessions.set(session.id, session);
       this.saveSessionToDatabase(session);
       this.updateSessionStatus(session.id, 'open', Date.now());
-      this.broadcastSSE(session.id, 'open', {
-        status: 'open',
-      });
     });
 
     // Connection closed
     session.on('connection-close', (statusCode) => {
       this.saveSessionToDatabase(session);
       this.updateSessionStatus(session.id, 'close');
-      this.broadcastSSE(session.id, 'connection-close', {
-        statusCode,
-        status: 'close',
-      });
-    });
-
-    // Session stopped
-    session.on('session-stopped', (reason) => {
-      this.saveSessionToDatabase(session);
-      this.updateSessionStatus(session.id, 'close');
-      this.broadcastSSE(session.id, 'session-stopped', {
-        reason,
-        status: 'error',
-      });
     });
 
     // Error occurred
     session.on('error', (error) => {
       this.saveSessionToDatabase(session);
       this.updateSessionStatus(session.id, 'close');
-      this.broadcastSSE(session.id, 'error', {
-        error: error.message,
-        status: 'error',
-      });
     });
-  }
-
-  /**
-   * Subscribe to SSE events for a session
-   */
-  subscribeToSSE(sessionId: string, send: (data: any) => void): () => void {
-    if (!this.sseClients.has(sessionId)) {
-      this.sseClients.set(sessionId, new Set());
-    }
-
-    const clients = this.sseClients.get(sessionId)!;
-    clients.add(send);
-
-    logger.info(
-      `[SessionManager] SSE client subscribed to ${sessionId} (${clients.size} total)`,
-    );
-
-    // Return unsubscribe function
-    return () => {
-      clients.delete(send);
-      if (clients.size === 0) {
-        this.sseClients.delete(sessionId);
-      }
-      logger.info(`[SessionManager] SSE client unsubscribed from ${sessionId}`);
-    };
   }
 
   /**
@@ -323,7 +252,7 @@ export class SessionManager {
     this.attachSessionEventListeners(session, name);
 
     // Auto-cleanup when session stops permanently
-    session.once('session-stopped', (reason) => {
+    session.on('session-stopped', (reason) => {
       logger.info(
         `[SessionManager] Session ${id} stopped permanently (${reason}), auto-removing...`,
       );

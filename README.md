@@ -71,10 +71,10 @@ Aplikasi akan berjalan di `http://localhost:3000` (atau port yang dikonfigurasi)
 
 Konfigurasi dilakukan melalui environment variable:
 
-| Variable       | Deskripsi                         | Default        |
-| -------------- | --------------------------------- | -------------- |
-| `PORT`         | Port server                       | `3000`         |
-| `DB_PATH`      | Direktori penyimpanan data        | `session_data` |
+| Variable       | Deskripsi                           | Default        |
+| -------------- | ----------------------------------- | -------------- |
+| `PORT`         | Port server                         | `3000`         |
+| `DB_PATH`      | Direktori penyimpanan data          | `session_data` |
 | `MAX_SESSIONS` | Maksimal jumlah sesi yang diizinkan | `100`          |
 
 ---
@@ -100,9 +100,9 @@ session_data/
 
 **Komponen Database:**
 
-| File | Fungsi |
-|------|--------|
-| `main.sqlite` | Menyimpan metadata semua koneksi (ID, nama, webhook URL, status, dll) |
+| File                   | Fungsi                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `main.sqlite`          | Menyimpan metadata semua koneksi (ID, nama, webhook URL, status, dll)                                |
 | `{deviceId}/db.sqlite` | Menyimpan kredensial autentikasi, kunci enkripsi, cache pesan, dan metadata grup untuk sesi tertentu |
 
 ### Keuntungan Arsitektur Ini
