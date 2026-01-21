@@ -2,8 +2,8 @@ import { logger } from '@/logger';
 import { openapi } from '@elysiajs/openapi';
 import { Elysia } from 'elysia';
 import { version } from 'package.json';
+import indexClient from './client/index.html';
 import { connections } from './connections';
-import indexClient from './index.html';
 import { messages } from './messages';
 
 const app = new Elysia()
