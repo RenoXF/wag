@@ -173,7 +173,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     }
 
     if (phoneNumber) {
-      this.phoneNumber = validatePhoneNumber(phoneNumber);
+      this.phoneNumber = validatePhoneNumber(phoneNumber) ?? null;
     }
 
     if (webhookUrl) {
