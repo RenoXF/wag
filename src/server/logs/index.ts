@@ -128,7 +128,6 @@ export const logs = new Elysia({
         signal: AbortSignal.timeout(30_000),
       });
       for await (const line of stream) {
-        console.log('line', line);
         const logs = line
           .split('\n')
           .filter(Boolean)
