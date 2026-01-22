@@ -3,6 +3,8 @@ import { SessionManager } from '@/whatsapp/session-manager';
 import { Elysia, sse, t } from 'elysia';
 
 const sessionManager = SessionManager.getInstance();
+const refreshGroupsRateLimit = new Map<string, number>();
+const REFRESH_GROUPS_COOLDOWN_MS = 60_000 * 5;
 
 export const connections = new Elysia({
   prefix: '/connections',
@@ -392,6 +394,69 @@ export const connections = new Elysia({
       detail: {
         summary: 'Set online status',
         description: 'Set the online/offline status for a WhatsApp session',
+      },
+    },
+  )
+
+  .post(
+    '/refresh-groups',
+    async ({ body, set }) => {
+      const id = body.deviceId;
+      const session = sessionManager.getSession(id);
+      if (!session) {
+        set.status = 404;
+        return { success: false, message: 'Session not found' };
+      }
+
+      const socket = session.getSocket();
+      if (!socket) {
+        set.status = 400;
+        return {
+          success: false,
+          message: 'Session not connected',
+        };
+      }
+
+      const now = Date.now();
+      const lastRefresh = refreshGroupsRateLimit.get(id);
+      if (lastRefresh && now - lastRefresh < REFRESH_GROUPS_COOLDOWN_MS) {
+        const remainingSeconds = Math.ceil(
+          (REFRESH_GROUPS_COOLDOWN_MS - (now - lastRefresh)) / 1000,
+        );
+        set.status = 429;
+        set.headers['Retry-After'] = String(remainingSeconds);
+        return {
+          success: false,
+          message: `Rate limited. Please wait ${remainingSeconds} seconds before refreshing again.`,
+        };
+      }
+
+      try {
+        await socket.groupFetchAllParticipating();
+        refreshGroupsRateLimit.set(id, now);
+        return {
+          success: true,
+          message: `Groups refreshed successfully`,
+        };
+      } catch (err) {
+        set.status = 500;
+        return {
+          success: false,
+          message: 'Failed to refresh groups',
+        };
+      }
+    },
+    {
+      body: t.Object({
+        deviceId: t.String({
+          minLength: 1,
+          pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
+        }),
+      }),
+      detail: {
+        summary: 'Refresh groups',
+        description:
+          'Refresh the list of groups for a WhatsApp session (rate limited to once per 5 minutes)',
       },
     },
   );
