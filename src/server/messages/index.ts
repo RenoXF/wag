@@ -59,6 +59,7 @@ export const messages = new Elysia({
     body: t.Object({
       deviceId: t.String({
         minLength: 1,
+        pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
       }),
       id: t.Optional(t.Nullable(t.String())),
       message: t.String({

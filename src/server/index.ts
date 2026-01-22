@@ -4,6 +4,7 @@ import { Elysia } from 'elysia';
 import { version } from 'package.json';
 import indexClient from './client/index.html';
 import { connections } from './connections';
+import { logs } from './logs';
 import { messages } from './messages';
 
 const app = new Elysia()
@@ -26,6 +27,7 @@ const app = new Elysia()
   )
   .use(connections)
   .use(messages)
+  .use(logs)
   .get('/', indexClient, {
     detail: {
       hide: true,

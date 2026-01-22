@@ -132,6 +132,7 @@ export const connections = new Elysia({
       body: t.Object({
         deviceId: t.String({
           minLength: 1,
+          pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
         webhookUrl: t.Optional(
           t.Nullable(
@@ -182,6 +183,7 @@ export const connections = new Elysia({
       body: t.Object({
         deviceId: t.String({
           minLength: 1,
+          pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
       }),
       detail: {
@@ -221,6 +223,7 @@ export const connections = new Elysia({
       body: t.Object({
         deviceId: t.String({
           minLength: 1,
+          pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
       }),
       detail: {
@@ -257,6 +260,7 @@ export const connections = new Elysia({
       query: t.Object({
         deviceId: t.String({
           minLength: 1,
+          pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
       }),
       detail: {
@@ -381,6 +385,7 @@ export const connections = new Elysia({
       body: t.Object({
         deviceId: t.String({
           minLength: 1,
+          pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
         online: t.Boolean(),
       }),
