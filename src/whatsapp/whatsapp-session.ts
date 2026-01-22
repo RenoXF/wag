@@ -73,6 +73,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
   private pruneJob: Cron | null = null;
 
   private _connectionState: WAConnectionState = 'close';
+  private _isNewSession: boolean = false;
 
   constructor(
     id: string,
@@ -554,6 +555,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   'Restart required, restarting',
                 );
                 this.cleanup();
+                this._isNewSession = true;
                 clearTimeout(this.timeout);
                 this.emit('session-stopped', 'restartRequired');
 
@@ -650,6 +652,14 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             this.pruneJob = new Cron('0 0 * * *', () => {
               this.pruneOldMessages(30);
             });
+            if (this._isNewSession) {
+              sock.groupFetchAllParticipating().catch((err) => {
+                this.logger.error(
+                  { err },
+                  'Error in groupFetchAllParticipating',
+                );
+              });
+            }
             this.heartbeatInterval = setInterval(
               () => {
                 // send heartbeat webhook
@@ -736,6 +746,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this._connectionState = 'close';
     clearInterval(this.heartbeatInterval);
     this.heartbeatInterval = undefined;
+    this._isNewSession = false;
   }
 
   async logout(): Promise<void> {
