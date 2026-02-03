@@ -12,7 +12,7 @@
         "jimp": "^1.6.0",
         "libphonenumber-js": "^1.12.36",
         "readeof": "^1.1.0",
-        "rotating-file-stream": "^3.2.7",
+        "rotating-file-stream": "^3.2.8",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -430,7 +430,7 @@
 
     "rfdc": ["rfdc@1.4.1", "", {}, "sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA=="],
 
-    "rotating-file-stream": ["rotating-file-stream@3.2.7", "", {}, "sha512-SVquhBEVvRFY+nWLUc791Y0MIlyZrEClRZwZFLLRgJKldHyV1z4e2e/dp9LPqCS3AM//uq/c3PnOFgjqnm5P+A=="],
+    "rotating-file-stream": ["rotating-file-stream@3.2.8", "", {}, "sha512-b+5jU0GM4JJnk+++zYPNBb7Hq3qCj02LcuzTpDmHCbphoGl4rp/CLa7AwEQjVs4vWJVy3Cba8ar6ZlFip5fnDA=="],
 
     "safe-buffer": ["safe-buffer@5.2.1", "", {}, "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ=="],
 
