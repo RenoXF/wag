@@ -444,7 +444,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   'WhatsApp service unavailable, reconnecting',
                 );
                 this.cleanup();
-                this.emit('session-stopped', 'unavailableService');
+                // this.emit('session-stopped', 'unavailableService');
+                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'WhatsApp Service is Unavailable, reconnecting...',
                   isRestart: true,
@@ -490,7 +491,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 }
                 this.cleanup();
 
-                this.emit('session-stopped', 'connectionClosed');
+                // this.emit('session-stopped', 'connectionClosed');
+                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'Connection closed, reconnecting....',
                   isRestart: true,
@@ -509,7 +511,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 this.cleanup();
 
                 this.connect().catch((err) => this.emit('error', err));
-                this.emit('session-stopped', 'connectionLost');
+                // this.emit('session-stopped', 'connectionLost');
+                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'Connection Lost from Server, reconnecting...',
                   isRestart: true,
@@ -557,7 +560,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 this.cleanup();
                 this._isNewSession = true;
                 clearTimeout(this.timeout);
-                this.emit('session-stopped', 'restartRequired');
+                // this.emit('session-stopped', 'restartRequired');
+                this.emit('connection-close', statusCode);
 
                 this.sendWebhook('close', {
                   reason: 'Restart Required, Restarting...',
@@ -611,7 +615,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   clearCreds();
                 }
                 this.cleanup();
-                this.emit('session-stopped', 'timeout');
+                // this.emit('session-stopped', 'timeout');
+                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'Process timeout reached.',
                   isRestart: false,
@@ -629,7 +634,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 );
                 this.cleanup();
                 // clearCreds();
-                this.emit('session-stopped', 'unknown');
+                // this.emit('session-stopped', 'unknown');
+                this.emit('connection-close', statusCode ?? -1);
                 this.sendWebhook('close', {
                   reason: 'Unknown DisconnectReason, reconnecting...',
                   isRestart: true,
