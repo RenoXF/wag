@@ -61,7 +61,7 @@
     "croner": "^10.0.1",
     "elysia": "^1.4.25",
     "jimp": "^1.6.0",
-    "libphonenumber-js": "^1.12.36",
+    "libphonenumber-js": "^1.12.37",
     "readeof": "^1.1.0",
     "rotating-file-stream": "^3.2.8"
   },
