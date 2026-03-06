@@ -471,7 +471,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   { reason: 'badSession' },
                   'Bad session file, delete and scan again',
                 );
-                this.cleanup();
+                this.cleanup(true);
                 clearCreds();
                 this.emit('session-stopped', 'badSession');
                 this.sendWebhook('close', {
@@ -524,7 +524,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   { reason: 'connectionReplaced' },
                   'Connection replaced, another session opened',
                 );
-                this.cleanup();
+                this.cleanup(true);
                 clearCreds();
                 this.emit('session-stopped', 'connectionReplaced');
                 this.sendWebhook('close', {
@@ -577,7 +577,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   },
                   'Multi-device mismatch, scan again',
                 );
-                this.cleanup();
+                this.cleanup(true);
                 clearCreds();
                 this.emit('session-stopped', 'multideviceMismatch');
                 this.sendWebhook('close', {
@@ -594,7 +594,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   },
                   'Session disconnected by user',
                 );
-                this.cleanup();
+                this.cleanup(true);
                 this.emit('session-stopped', 'disconnectedByUser');
                 this.sendWebhook('close', {
                   reason: 'Session disconnected by user.',
@@ -614,7 +614,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   );
                   clearCreds();
                 }
-                this.cleanup();
+                this.cleanup(true);
                 // this.emit('session-stopped', 'timeout');
                 this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
@@ -735,24 +735,31 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
       );
       this.socket = null;
     }
-    this.cleanup();
+    this.cleanup(true);
   }
 
-  private cleanup() {
+  private cleanup(fullCleanup: boolean = false): void {
     this.socket = null;
     this.isLoggedIn = false;
     this.qrCode = null;
     this.pairingCode = null;
-    this.db?.close();
-    this.db = null;
+    // this.db?.close();
+    // this.db = null;
     this.dbQueries = null;
     this.pruneJob?.stop();
     this.pruneJob = null;
-    this.messageMutex.cancel();
+    // this.messageMutex.cancel();
     this._connectionState = 'close';
     clearInterval(this.heartbeatInterval);
     this.heartbeatInterval = undefined;
     this._isNewSession = false;
+
+    if (fullCleanup) {
+      this.logger.info('Performing full cleanup: closing database connection');
+      this.db?.close();
+      this.db = null;
+      this.messageMutex.cancel();
+    }
   }
 
   async logout(): Promise<void> {
@@ -790,7 +797,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     sendPresence: boolean = false,
   ) {
     const send = async () => {
+      this.logger.info(`[${this.sessionId}]: Acquired mutex for sending message to jid: ${jid}, with id: ${id}`);
       if (!this.socket) {
+        this.logger.error(`[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`);
         throw new Error(`[${this.sessionId}] Socket not connected`);
       }
 
@@ -824,6 +833,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         await Bun.sleep(randomInt(30, 60) * 1000);
       }
 
+      this.logger.info(`[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`);
       await this.socket
         .sendMessage(jid, content, options ?? undefined)
         .catch((r) => {
@@ -836,9 +846,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.messageMutex
       .runExclusive(send)
       .catch((err) => {
-        this.logger.error({ err }, 'Send message mutex error');
+        this.logger.error({ err }, `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id}`);
         if ((err = E_CANCELED)) {
-          this.logger.error('Message sending cancelled');
+          this.logger.error(`[${this.sessionId}]: Message sending cancelled for jid: ${jid}, with id: ${id}`);
           return;
         }
 
@@ -851,6 +861,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         });
       })
       .then(() => {
+        this.logger.info(`[${this.sessionId}]: Message sent successfully to jid: ${jid}, with id: ${id}`);
         this.sendWebhook('message_sent', {
           id,
           deviceId: this.sessionId,
