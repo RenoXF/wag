@@ -198,11 +198,14 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.logger.info('Starting connection process');
     this.logger.info({ status: this.getStatus() }, 'Connection status');
     await mkdir(this.dbDirectory, { recursive: true });
-    const db = new Database(`${this.dbDirectory}/db.sqlite`);
-    startDbMigration(db);
-    this.db = db;
-    const dbQueries = new DatabaseQueries(db);
-    this.dbQueries = dbQueries;
+
+    if (!this.db) {
+      const db = new Database(`${this.dbDirectory}/db.sqlite`);
+      startDbMigration(db);
+      this.db = db;
+      const dbQueries = new DatabaseQueries(db);
+      this.dbQueries = dbQueries;
+    }
 
     return new Promise<WASocket>(async (resolve, reject) => {
       try {
