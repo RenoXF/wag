@@ -780,42 +780,49 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
    * @param jid JID of the contact
    * @param content Message content
    * @param options Misc message generation options
+   * @param sendPresence Whether to send presence updates before sending message. Default is false.
    */
   async sendMessage(
     id: string,
     jid: string,
     content: AnyMessageContent,
     options: MiscMessageGenerationOptions | undefined = undefined,
+    sendPresence: boolean = false,
   ) {
     const send = async () => {
       if (!this.socket) {
         throw new Error(`[${this.sessionId}] Socket not connected`);
       }
 
-      await this.socket
-        .presenceSubscribe(jid)
-        .catch((r) =>
-          this.logger.error({ error: r }, 'presenceSubscribe error'),
-        );
-      await Bun.sleep(randomInt(10, 15) * 100);
-      await this.socket
-        .sendPresenceUpdate('available', jid)
-        .catch((r) =>
-          this.logger.error({ error: r }, 'sendPresenceUpdate available error'),
-        );
-      await Bun.sleep(randomInt(10, 15) * 100);
-      await this.socket
-        .sendPresenceUpdate('composing', jid)
-        .catch((r) =>
-          this.logger.error({ error: r }, 'sendPresenceUpdate composing error'),
-        );
-      await Bun.sleep(randomInt(10, 15) * 100);
-      await this.socket
-        .sendPresenceUpdate('paused', jid)
-        .catch((r) =>
-          this.logger.error({ error: r }, 'sendPresenceUpdate paused error'),
-        );
-      await Bun.sleep(randomInt(10, 15) * 100);
+
+      if (sendPresence) {
+        await this.socket
+          .presenceSubscribe(jid)
+          .catch((r) =>
+            this.logger.error({ error: r }, 'presenceSubscribe error'),
+          );
+        await Bun.sleep(randomInt(10, 15) * 100);
+        await this.socket
+          .sendPresenceUpdate('available', jid)
+          .catch((r) =>
+            this.logger.error({ error: r }, 'sendPresenceUpdate available error'),
+          );
+        await Bun.sleep(randomInt(10, 15) * 100);
+        await this.socket
+          .sendPresenceUpdate('composing', jid)
+          .catch((r) =>
+            this.logger.error({ error: r }, 'sendPresenceUpdate composing error'),
+          );
+        await Bun.sleep(randomInt(10, 15) * 100);
+        await this.socket
+          .sendPresenceUpdate('paused', jid)
+          .catch((r) =>
+            this.logger.error({ error: r }, 'sendPresenceUpdate paused error'),
+          );
+        await Bun.sleep(randomInt(10, 15) * 100);
+      } else {
+        await Bun.sleep(randomInt(30, 60) * 1000);
+      }
 
       await this.socket
         .sendMessage(jid, content, options ?? undefined)
@@ -823,7 +830,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           throw new Error(`[${this.sessionId}] sendMessage error: ${r}`);
         });
 
-      await Bun.sleep(randomInt(160, 190) * 1000);
+      await Bun.sleep(randomInt(30, 60) * 1000);
     };
 
     this.messageMutex
