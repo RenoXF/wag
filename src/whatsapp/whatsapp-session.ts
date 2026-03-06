@@ -177,8 +177,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
 
     if (this.db) {
       this.logger.info(
-        'Database already initialized. Reusing existing connection',
+        'Database already initialized. Closing existing db connection',
       );
+      this.db.close();
+      this.db = null;
     }
 
     if (phoneNumber) {
@@ -199,13 +201,11 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.logger.info({ status: this.getStatus() }, 'Connection status');
     await mkdir(this.dbDirectory, { recursive: true });
 
-    if (!this.db) {
-      const db = new Database(`${this.dbDirectory}/db.sqlite`);
-      startDbMigration(db);
-      this.db = db;
-      const dbQueries = new DatabaseQueries(db);
-      this.dbQueries = dbQueries;
-    }
+    const db = new Database(`${this.dbDirectory}/db.sqlite`);
+    startDbMigration(db);
+    this.db = db;
+    const dbQueries = new DatabaseQueries(db);
+    this.dbQueries = dbQueries;
 
     return new Promise<WASocket>(async (resolve, reject) => {
       try {
