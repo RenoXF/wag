@@ -558,6 +558,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   'Restart required, restarting',
                 );
                 this.cleanup();
+                this.db?.close();
+                this.db = null;
                 this._isNewSession = true;
                 clearTimeout(this.timeout);
                 // this.emit('session-stopped', 'restartRequired');
@@ -797,12 +799,15 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     sendPresence: boolean = false,
   ) {
     const send = async () => {
-      this.logger.info(`[${this.sessionId}]: Acquired mutex for sending message to jid: ${jid}, with id: ${id}`);
+      this.logger.info(
+        `[${this.sessionId}]: Acquired mutex for sending message to jid: ${jid}, with id: ${id}`,
+      );
       if (!this.socket) {
-        this.logger.error(`[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`);
+        this.logger.error(
+          `[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`,
+        );
         throw new Error(`[${this.sessionId}] Socket not connected`);
       }
-
 
       if (sendPresence) {
         await this.socket
@@ -814,13 +819,19 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         await this.socket
           .sendPresenceUpdate('available', jid)
           .catch((r) =>
-            this.logger.error({ error: r }, 'sendPresenceUpdate available error'),
+            this.logger.error(
+              { error: r },
+              'sendPresenceUpdate available error',
+            ),
           );
         await Bun.sleep(randomInt(10, 15) * 100);
         await this.socket
           .sendPresenceUpdate('composing', jid)
           .catch((r) =>
-            this.logger.error({ error: r }, 'sendPresenceUpdate composing error'),
+            this.logger.error(
+              { error: r },
+              'sendPresenceUpdate composing error',
+            ),
           );
         await Bun.sleep(randomInt(10, 15) * 100);
         await this.socket
@@ -833,7 +844,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         await Bun.sleep(randomInt(30, 60) * 1000);
       }
 
-      this.logger.info(`[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`);
+      this.logger.info(
+        `[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`,
+      );
       await this.socket
         .sendMessage(jid, content, options ?? undefined)
         .catch((r) => {
@@ -846,9 +859,14 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.messageMutex
       .runExclusive(send)
       .catch((err) => {
-        this.logger.error({ err }, `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id}`);
+        this.logger.error(
+          { err },
+          `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id}`,
+        );
         if ((err = E_CANCELED)) {
-          this.logger.error(`[${this.sessionId}]: Message sending cancelled for jid: ${jid}, with id: ${id}`);
+          this.logger.error(
+            `[${this.sessionId}]: Message sending cancelled for jid: ${jid}, with id: ${id}`,
+          );
           return;
         }
 
@@ -861,7 +879,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         });
       })
       .then(() => {
-        this.logger.info(`[${this.sessionId}]: Message sent successfully to jid: ${jid}, with id: ${id}`);
+        this.logger.info(
+          `[${this.sessionId}]: Message sent successfully to jid: ${jid}, with id: ${id}`,
+        );
         this.sendWebhook('message_sent', {
           id,
           deviceId: this.sessionId,
