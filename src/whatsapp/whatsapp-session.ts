@@ -180,8 +180,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
 
     if (this.db) {
       this.logger.info(
-        'Database already initialized. Reusing existing connection',
+        'Database already initialized. Closing existing db connection',
       );
+      this.db.close();
+      this.db = null;
     }
 
     if (phoneNumber) {
@@ -201,6 +203,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.logger.info('Starting connection process');
     this.logger.info({ status: this.getStatus() }, 'Connection status');
     await mkdir(this.dbDirectory, { recursive: true });
+
     const db = new Database(`${this.dbDirectory}/db.sqlite`);
     startDbMigration(db);
     this.db = db;
@@ -561,6 +564,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   'Restart required, restarting',
                 );
                 this.cleanup();
+                this.db?.close();
+                this.db = null;
                 this._isNewSession = true;
                 clearTimeout(this.timeout);
                 // this.emit('session-stopped', 'restartRequired');
@@ -802,7 +807,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     const send = async () => {
       this.logger.info(`[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`);
       if (!this.socket) {
-        this.logger.error(`[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`);
+        this.logger.error(
+          `[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`,
+        );
         throw new Error(`[${this.sessionId}] Socket not connected`);
       }
 
@@ -816,13 +823,19 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         await this.socket
           .sendPresenceUpdate('available', jid)
           .catch((r) =>
-            this.logger.error({ error: r }, 'sendPresenceUpdate available error'),
+            this.logger.error(
+              { error: r },
+              'sendPresenceUpdate available error',
+            ),
           );
         await Bun.sleep(randomInt(10, 15) * 100);
         await this.socket
           .sendPresenceUpdate('composing', jid)
           .catch((r) =>
-            this.logger.error({ error: r }, 'sendPresenceUpdate composing error'),
+            this.logger.error(
+              { error: r },
+              'sendPresenceUpdate composing error',
+            ),
           );
         await Bun.sleep(randomInt(10, 15) * 100);
         await this.socket
@@ -835,12 +848,14 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         await Bun.sleep(randomInt(30, 60) * 1000);
       }
 
-      const result = await this.socket
-        .sendMessage(jid, content, options ?? undefined);
-
-      if (!result) {
-        throw new Error(`[${this.sessionId}] Message send returned empty result for jid: ${jid}, with id: ${id}`);
-      }
+      this.logger.info(
+        `[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`,
+      );
+      await this.socket
+        .sendMessage(jid, content, options ?? undefined)
+        .catch((r) => {
+          throw new Error(`[${this.sessionId}] sendMessage error: ${r}`);
+        });
 
       await Bun.sleep(randomInt(30, 60) * 1000);
     };

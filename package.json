@@ -3,7 +3,7 @@
   "description": "Whatsapp Multi-Session API Server Gateway",
   "module": "src/index.ts",
   "type": "module",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "license": "MIT",
   "author": {
     "name": "Ashary Vermaysha",
@@ -25,7 +25,7 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.4.0",
     "bun-plugin-tailwind": "^0.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.3.2",
@@ -61,7 +61,7 @@
     "croner": "^10.0.1",
     "elysia": "^1.4.27",
     "jimp": "^1.6.0",
-    "libphonenumber-js": "^1.12.38",
+    "libphonenumber-js": "^1.12.39",
     "readeof": "^1.1.0",
     "rotating-file-stream": "^3.2.9"
   },

@@ -53,6 +53,7 @@ const app = new Elysia()
   .listen(
     {
       port: Bun.env.PORT ? Number(Bun.env.PORT) : 3000,
+      hostname: Bun.env.HOSTNAME ?? '127.0.0.1',
       reusePort: false,
     },
     ({ hostname, port }) => {
