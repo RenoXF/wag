@@ -39,3 +39,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 *.db-journal
 *.sqlite-journal
 session_data
+
+logs
+pm2.config.cjs
