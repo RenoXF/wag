@@ -1,6 +1,6 @@
 import { DB_PATH } from '@/config';
 import { Boom } from '@hapi/boom';
-import { E_CANCELED, Mutex } from 'async-mutex';
+import { Mutex } from 'async-mutex';
 import {
   DisconnectReason,
   fetchLatestBaileysVersion,
@@ -21,6 +21,7 @@ import { Cron } from 'croner';
 import { randomInt } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { mkdir, rm } from 'node:fs/promises';
+import PQueue from 'p-queue';
 import P from 'pino';
 import { startDbMigration } from './db-migration';
 import { DatabaseQueries } from './db-queries';
@@ -68,7 +69,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
   private timeout: NodeJS.Timeout | undefined = undefined;
   private heartbeatInterval: NodeJS.Timeout | undefined = undefined;
 
-  private messageMutex = new Mutex();
+  private messageQueue = new PQueue({ concurrency: 1 });
+  private readonly MAX_RETRIES = 3;
+  private readonly RETRY_DELAY = 5_000;
   private webhookMutex = new Mutex();
   private pruneJob: Cron | null = null;
 
@@ -748,7 +751,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.dbQueries = null;
     this.pruneJob?.stop();
     this.pruneJob = null;
-    // this.messageMutex.cancel();
+    this.messageQueue.clear();
     this._connectionState = 'close';
     clearInterval(this.heartbeatInterval);
     this.heartbeatInterval = undefined;
@@ -758,7 +761,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
       this.logger.info('Performing full cleanup: closing database connection');
       this.db?.close();
       this.db = null;
-      this.messageMutex.cancel();
+      this.messageQueue.clear();
     }
   }
 
@@ -797,12 +800,11 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     sendPresence: boolean = false,
   ) {
     const send = async () => {
-      this.logger.info(`[${this.sessionId}]: Acquired mutex for sending message to jid: ${jid}, with id: ${id}`);
+      this.logger.info(`[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`);
       if (!this.socket) {
         this.logger.error(`[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`);
         throw new Error(`[${this.sessionId}] Socket not connected`);
       }
-
 
       if (sendPresence) {
         await this.socket
@@ -833,33 +835,38 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         await Bun.sleep(randomInt(30, 60) * 1000);
       }
 
-      this.logger.info(`[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`);
-      await this.socket
-        .sendMessage(jid, content, options ?? undefined)
-        .catch((r) => {
-          throw new Error(`[${this.sessionId}] sendMessage error: ${r}`);
-        });
+      const result = await this.socket
+        .sendMessage(jid, content, options ?? undefined);
+
+      if (!result) {
+        throw new Error(`[${this.sessionId}] Message send returned empty result for jid: ${jid}, with id: ${id}`);
+      }
 
       await Bun.sleep(randomInt(30, 60) * 1000);
     };
 
-    this.messageMutex
-      .runExclusive(send)
-      .catch((err) => {
-        this.logger.error({ err }, `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id}`);
-        if ((err = E_CANCELED)) {
-          this.logger.error(`[${this.sessionId}]: Message sending cancelled for jid: ${jid}, with id: ${id}`);
+    const sendWithRetry = async () => {
+      let lastError: Error | null = null;
+      for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
+        try {
+          await send();
           return;
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error(String(err));
+          this.logger.warn(
+            { attempt, maxAttempts: this.MAX_RETRIES, err: lastError },
+            `[${this.sessionId}]: Message send attempt ${attempt}/${this.MAX_RETRIES} failed for jid: ${jid}, with id: ${id}`,
+          );
+          if (attempt < this.MAX_RETRIES) {
+            await Bun.sleep(this.RETRY_DELAY);
+          }
         }
+      }
+      throw lastError;
+    };
 
-        this.sendWebhook('message_error', {
-          id,
-          deviceId: this.sessionId,
-          message: (content as any).text ?? '',
-          recipient: jid,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      })
+    this.messageQueue
+      .add(sendWithRetry)
       .then(() => {
         this.logger.info(`[${this.sessionId}]: Message sent successfully to jid: ${jid}, with id: ${id}`);
         this.sendWebhook('message_sent', {
@@ -867,6 +874,16 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           deviceId: this.sessionId,
           message: (content as any).text ?? '',
           recipient: jid,
+        });
+      })
+      .catch((err) => {
+        this.logger.error({ err }, `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id} after ${this.MAX_RETRIES} attempts`);
+        this.sendWebhook('message_error', {
+          id,
+          deviceId: this.sessionId,
+          message: (content as any).text ?? '',
+          recipient: jid,
+          error: err instanceof Error ? err.message : String(err),
         });
       });
   }
