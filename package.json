@@ -56,7 +56,7 @@
     "organizeImportsSkipDestructiveCodeActions": true
   },
   "dependencies": {
-    "@elysiajs/openapi": "^1.4.14",
+    "@elysiajs/openapi": "^1.4.15",
     "baileys": "^7.0.0-rc.9",
     "croner": "^10.0.1",
     "elysia": "^1.4.28",
