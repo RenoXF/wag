@@ -976,21 +976,25 @@
         statusDiv.style.display = 'block';
 
         try {
-          await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              event: 'ping',
-              timestamp: new Date().toISOString(),
-            }),
-            mode: 'no-cors', // For CORS issues, we'll assume success
+          const res = await fetch('/test-callback?host='+encodeURIComponent(webhookUrl), {
+            method: 'GET',
           });
 
-          // With no-cors, we can't read the response, but if it doesn't throw, it's reachable
-          statusDiv.innerHTML =
-            '<span class="webhook-status valid">' +
-            '<i class="bi bi-check-circle"></i> Webhook is reachable' +
-            '</span>';
+          const resData = await res.json();
+
+          if (res.ok) {
+            statusDiv.innerHTML =
+              '<span class="webhook-status valid">' +
+              '<i class="bi bi-check-circle"></i> Webhook is reachable' +
+              '</span>';
+          } else {
+            statusDiv.innerHTML =
+              '<span class="webhook-status invalid">' +
+              '<i class="bi bi-x-circle"></i> Webhook responded with message ' +
+              resData.message +
+              '</span>';
+          }
+
         } catch (error) {
           statusDiv.innerHTML =
             '<span class="webhook-status invalid">' +
