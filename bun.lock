@@ -10,7 +10,7 @@
         "croner": "^10.0.1",
         "elysia": "^1.4.28",
         "jimp": "^1.6.1",
-        "libphonenumber-js": "^1.12.42",
+        "libphonenumber-js": "^1.12.43",
         "readeof": "^1.1.0",
         "rotating-file-stream": "^3.2.9",
       },
@@ -310,7 +310,7 @@
 
     "keyv": ["keyv@5.6.0", "", { "dependencies": { "@keyv/serialize": "^1.1.1" } }, "sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw=="],
 
-    "libphonenumber-js": ["libphonenumber-js@1.12.42", "", {}, "sha512-oKQFPTibqQwZZkChCDVMFVJXMZdyJNqDWZWYNn8BgyAaK/6yFJEowxCY0RVFirRyWP63hMRuKlkSEd9qlvbWXg=="],
+    "libphonenumber-js": ["libphonenumber-js@1.12.43", "", {}, "sha512-5n+HnmkNpgZCfaNVxrTGZHr6Lhv3gd0UtbD5lrzun3T2YNyVvCuJz9vkap2E0YWZWU1XF+0XljYAkrAJBbwbrg=="],
 
     "libsignal": ["@whiskeysockets/libsignal-node@github:whiskeysockets/libsignal-node#1c30d7d", { "dependencies": { "curve25519-js": "^0.0.4", "protobufjs": "6.8.8" } }, "WhiskeySockets-libsignal-node-1c30d7d"],
 
