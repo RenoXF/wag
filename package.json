@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "@elysiajs/openapi": "^1.4.15",
-    "baileys": "^7.0.0-rc12",
+    "baileys": "^7.0.0-rc13",
     "croner": "^10.0.1",
     "elysia": "^1.4.28",
     "jimp": "^1.6.1",
