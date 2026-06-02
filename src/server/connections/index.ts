@@ -85,7 +85,12 @@ export const connections = new Elysia({
             if (!res.ok) {
               set.status = 400;
 
-              return { error: 'Webhook URL must be return 200 HTTP Code' };
+              return {
+                error:
+                  'Webhook URL must be return 200 HTTP Code. ' +
+                  res.status +
+                  ' received instead.',
+              };
             }
           } catch (error) {
             set.status = 400;
