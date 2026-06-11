@@ -25,7 +25,7 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^25.9.2",
+    "@types/node": "^25.9.3",
     "bun-plugin-tailwind": "^0.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
