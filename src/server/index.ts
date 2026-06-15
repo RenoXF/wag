@@ -46,7 +46,8 @@ const app = new Elysia()
           event: 'ping',
           timestamp: new Date().toISOString(),
         }),
-        signal: AbortSignal.timeout(1000 * 5)
+        signal: AbortSignal.timeout(1000 * 15),
+        verbose: true,
       });
 
       if (!response.ok) {

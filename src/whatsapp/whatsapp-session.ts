@@ -945,7 +945,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
       try {
         const response = await fetch(this.webhookUrl, {
           method: 'POST',
-          signal: AbortSignal.timeout(3_000),
+          signal: AbortSignal.timeout(15_000),
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': `WAG-WhatsAppSession/${this.sessionId}`,
@@ -954,6 +954,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             'X-Timestamp': new Date().toISOString(),
           },
           body: body,
+          verbose: true,
         });
 
         if (!response.ok) {

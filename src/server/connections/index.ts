@@ -79,7 +79,8 @@ export const connections = new Elysia({
                 event: 'ping',
                 data: { deviceId: body.deviceId },
               }),
-              signal: AbortSignal.timeout(5000), // 5 seconds timeout
+              signal: AbortSignal.timeout(15000), // 15 seconds timeout
+              verbose: true,
             });
 
             if (!res.ok) {
