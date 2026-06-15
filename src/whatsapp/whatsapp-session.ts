@@ -845,7 +845,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           );
         await Bun.sleep(randomInt(10, 15) * 100);
       } else {
-        await Bun.sleep(randomInt(30, 60) * 1000);
+        await Bun.sleep(randomInt(10, 20) * 1000);
       }
 
       this.logger.info(
@@ -857,7 +857,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           throw new Error(`[${this.sessionId}] sendMessage error: ${r}`);
         });
 
-      await Bun.sleep(randomInt(30, 60) * 1000);
+      await Bun.sleep(randomInt(10, 20) * 1000);
     };
 
     const sendWithRetry = async () => {
