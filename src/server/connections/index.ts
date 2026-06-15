@@ -98,7 +98,7 @@ export const connections = new Elysia({
 
             return error instanceof Error
               ? {
-                  error: 'Invalid webhook URL: ' + error.message,
+                  error: 'Invalid webhook URL: (' + webhookUrl + ') ' + error.message,
                   message: error.message,
                 }
               : { error: 'Invalid webhook URL' };
