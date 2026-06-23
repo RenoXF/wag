@@ -63,7 +63,7 @@
     "elysia": "^1.4.29",
     "jimp": "^1.6.1",
     "libphonenumber-js": "^1.13.7",
-    "link-preview-js": "^4.0.3",
+    "link-preview-js": "^4.0.4",
     "readeof": "^1.1.0",
     "rotating-file-stream": "^3.2.9"
   },
