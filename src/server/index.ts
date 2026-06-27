@@ -41,6 +41,7 @@ const app = new Elysia()
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0`,
         },
         body: JSON.stringify({
           event: 'ping',
