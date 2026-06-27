@@ -3,7 +3,7 @@
   "description": "Whatsapp Multi-Session API Server Gateway",
   "module": "src/index.ts",
   "type": "module",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "license": "MIT",
   "author": {
     "name": "Ashary Vermaysha",
