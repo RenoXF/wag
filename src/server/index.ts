@@ -9,6 +9,7 @@ import { connections } from './connections';
 import { logs } from './logs';
 import { messages } from './messages';
 import { file } from 'bun';
+import { stringify } from 'qs';
 
 const app = new Elysia()
   .use(
@@ -40,10 +41,11 @@ const app = new Elysia()
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+          'Accept': '*/*'
         },
-        body: JSON.stringify({
+        body: stringify({
           event: 'ping',
           timestamp: new Date().toISOString(),
         }),
