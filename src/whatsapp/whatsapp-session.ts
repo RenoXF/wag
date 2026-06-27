@@ -948,7 +948,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           signal: AbortSignal.timeout(15_000),
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': `WAG-WhatsAppSession/${this.sessionId}`,
+            // 'User-Agent': `WAG-WhatsAppSession/${this.sessionId}`,
+            'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0`,
             'X-Session-ID': this.sessionId,
             'X-Event': event,
             'X-Timestamp': new Date().toISOString(),
