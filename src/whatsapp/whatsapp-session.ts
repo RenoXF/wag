@@ -23,12 +23,12 @@ import { EventEmitter } from 'node:events';
 import { mkdir, rm } from 'node:fs/promises';
 import PQueue from 'p-queue';
 import P from 'pino';
+import { stringify } from 'qs';
 import { startDbMigration } from './db-migration';
 import { DatabaseQueries } from './db-queries';
 import { useSqliteAuthState } from './sqlite-auth-state';
 import { validatePhoneNumber } from './validate-phone-number';
 import { createWhatsAppLogger } from './whatsapp-logger';
-import { stringify } from 'qs';
 
 /**
  * Event map for WhatsAppSession
@@ -144,6 +144,13 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
    */
   getPairingCode(): string | null {
     return this.pairingCode;
+  }
+
+  /**
+   * Get database queries instance for message history
+   */
+  getDbQueries(): DatabaseQueries | null {
+    return this.dbQueries;
   }
 
   getConnectionState(): WAConnectionState {
@@ -320,10 +327,17 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
               }
 
               if (msg.key.id && msg.key.remoteJid) {
-                dbQueries.upsertMessage(
-                  `${msg.key.remoteJid}-${msg.key.id}`,
-                  msg,
-                );
+                try {
+                  dbQueries.upsertMessage(
+                    `${msg.key.remoteJid}-${msg.key.id}`,
+                    msg,
+                  );
+                } catch (err) {
+                  this.logger.error(
+                    { err, messageId: msg.key.id },
+                    'Error saving message to DB',
+                  );
+                }
               }
             }
           }
@@ -336,7 +350,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
             if (msg.key.id && msg.key.remoteJid) {
               dbQueries.upsertMessage(
                 `${msg.key.remoteJid}-${msg.key.id}`,
-                msg.update,
+                msg,
               );
             }
           }
@@ -353,9 +367,11 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           this.logger.info({ count: updates.length }, 'Groups update event');
 
           for (const group of updates) {
-            if (!group.id) continue; // skip if no id
+            if (!group.id) continue;
             const data = await sock.groupMetadata(group.id).catch(() => null);
-            dbQueries.upsertGroup(group.id, data);
+            if (data) {
+              dbQueries.upsertGroup(group.id, data);
+            }
           }
         });
 
@@ -451,8 +467,6 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   'WhatsApp service unavailable, reconnecting',
                 );
                 this.cleanup();
-                // this.emit('session-stopped', 'unavailableService');
-                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'WhatsApp Service is Unavailable, reconnecting...',
                   isRestart: true,
@@ -498,8 +512,6 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 }
                 this.cleanup();
 
-                // this.emit('session-stopped', 'connectionClosed');
-                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'Connection closed, reconnecting....',
                   isRestart: true,
@@ -518,8 +530,6 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 this.cleanup();
 
                 this.connect().catch((err) => this.emit('error', err));
-                // this.emit('session-stopped', 'connectionLost');
-                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'Connection Lost from Server, reconnecting...',
                   isRestart: true,
@@ -569,8 +579,6 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                 this.db = null;
                 this._isNewSession = true;
                 clearTimeout(this.timeout);
-                // this.emit('session-stopped', 'restartRequired');
-                this.emit('connection-close', statusCode);
 
                 this.sendWebhook('close', {
                   reason: 'Restart Required, Restarting...',
@@ -624,8 +632,6 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   clearCreds();
                 }
                 this.cleanup(true);
-                // this.emit('session-stopped', 'timeout');
-                this.emit('connection-close', statusCode);
                 this.sendWebhook('close', {
                   reason: 'Process timeout reached.',
                   isRestart: false,
@@ -642,9 +648,6 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
                   'Unknown disconnect reason, reconnecting',
                 );
                 this.cleanup();
-                // clearCreds();
-                // this.emit('session-stopped', 'unknown');
-                this.emit('connection-close', statusCode ?? -1);
                 this.sendWebhook('close', {
                   reason: 'Unknown DisconnectReason, reconnecting...',
                   isRestart: true,
@@ -778,7 +781,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
       });
       this.socket = null;
     }
-    this.cleanup();
+    this.cleanup(true);
   }
 
   /**
@@ -806,7 +809,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     sendPresence: boolean = false,
   ) {
     const send = async () => {
-      this.logger.info(`[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`);
+      this.logger.info(
+        `[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`,
+      );
       if (!this.socket) {
         this.logger.error(
           `[${this.sessionId}]: Socket not connected, cannot send message to jid: ${jid}, with id: ${id}`,
@@ -884,7 +889,9 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     this.messageQueue
       .add(sendWithRetry)
       .then(() => {
-        this.logger.info(`[${this.sessionId}]: Message sent successfully to jid: ${jid}, with id: ${id}`);
+        this.logger.info(
+          `[${this.sessionId}]: Message sent successfully to jid: ${jid}, with id: ${id}`,
+        );
         this.sendWebhook('message_sent', {
           id,
           deviceId: this.sessionId,
@@ -893,7 +900,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
         });
       })
       .catch((err) => {
-        this.logger.error({ err }, `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id} after ${this.MAX_RETRIES} attempts`);
+        this.logger.error(
+          { err },
+          `[${this.sessionId}]: Error sending message to jid: ${jid}, with id: ${id} after ${this.MAX_RETRIES} attempts`,
+        );
         this.sendWebhook('message_error', {
           id,
           deviceId: this.sessionId,
@@ -950,7 +960,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             // 'User-Agent': `WAG-WhatsAppSession/${this.sessionId}`,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
             'X-Session-ID': this.sessionId,
             'X-Event': event,
             'X-Timestamp': new Date().toISOString(),

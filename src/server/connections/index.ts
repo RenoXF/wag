@@ -1,6 +1,6 @@
 import { logger } from '@/logger';
 import { SessionManager } from '@/whatsapp/session-manager';
-import { Elysia, sse, t } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { stringify } from 'qs';
 
 const sessionManager = SessionManager.getInstance();
@@ -77,7 +77,8 @@ export const connections = new Elysia({
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
               },
               body: stringify({
                 event: 'ping',
@@ -102,7 +103,11 @@ export const connections = new Elysia({
 
             return error instanceof Error
               ? {
-                  error: 'Invalid webhook URL: (' + webhookUrl + ') ' + error.message,
+                  error:
+                    'Invalid webhook URL: (' +
+                    webhookUrl +
+                    ') ' +
+                    error.message,
                   message: error.message,
                 }
               : { error: 'Invalid webhook URL' };

@@ -10,7 +10,7 @@
     "email": "vermaysha@gmail.com",
     "url": "https://vermaysha.com"
   },
-  "homepage": "https://github.com/vermaysha/wag",
+  "homepage": "https://github.com/RenoXF/wag",
   "keywords": [
     "whatsapp-server",
     "whatsapp-api-server",
@@ -19,13 +19,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vermaysha/wag.git"
+    "url": "https://github.com/RenoXF/wag.git"
   },
   "readme": "https://github.com/vermaysha/README.md",
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^26.1.0",
+    "@types/p-queue": "^3.2.1",
     "bun-plugin-tailwind": "^0.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",

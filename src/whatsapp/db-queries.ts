@@ -111,9 +111,7 @@ export class DatabaseQueries {
   deleteOldMessages(cutoffSeconds: number): number {
     let query;
     try {
-      query = this.db.prepare(
-        `DELETE FROM messages WHERE created_at < $cutoff`,
-      );
+      query = this.db.query(`DELETE FROM messages WHERE created_at < $cutoff`);
       const result = query.run({ $cutoff: cutoffSeconds });
 
       if (result.changes > 0) {
@@ -130,6 +128,94 @@ export class DatabaseQueries {
       return result.changes;
     } catch (error) {
       logger.error({ error }, '[DatabaseQueries] Error deleting old messages');
+      throw error;
+    } finally {
+      query?.finalize();
+    }
+  }
+
+  /**
+   * List all unique chat JIDs with their last message
+   * @returns Array of chat JIDs with last message info
+   */
+  listChatJids(): Array<{
+    chatJid: string;
+    lastMessage: unknown;
+    count: number;
+    lastTimestamp: number;
+  }> {
+    let query;
+    try {
+      query = this.db.query(`
+        SELECT
+          substr(key, 1, instr(key, '-') - 1) as chatJid,
+          MAX(created_at) as lastTimestamp,
+          COUNT(*) as count
+        FROM messages
+        GROUP BY chatJid
+        ORDER BY lastTimestamp DESC
+      `);
+      const rows = query.all() as Array<{
+        chatJid: string;
+        lastTimestamp: number;
+        count: number;
+      }>;
+
+      return rows.map((row) => {
+        const lastMsgQuery = this.db.query(
+          `SELECT value FROM messages WHERE key LIKE $pattern ORDER BY created_at DESC LIMIT 1`,
+        );
+        const lastMsg = lastMsgQuery.get({
+          $pattern: `${row.chatJid}-%`,
+        }) as { value: string } | undefined;
+        lastMsgQuery.finalize();
+
+        return {
+          chatJid: row.chatJid,
+          lastMessage: lastMsg?.value
+            ? JSON.parse(lastMsg.value, BufferJSON.reviver)
+            : null,
+          count: row.count,
+          lastTimestamp: row.lastTimestamp,
+        };
+      });
+    } catch (error) {
+      logger.error({ error }, '[DatabaseQueries] Error listing chat JIDs');
+      throw error;
+    } finally {
+      query?.finalize();
+    }
+  }
+
+  /**
+   * List messages for a specific chat JID
+   * @param chatJid The chat JID to filter by
+   * @param limit Maximum number of messages to return
+   * @param offset Number of messages to skip
+   * @returns Array of parsed message objects
+   */
+  listMessages(
+    chatJid: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): unknown[] {
+    let query;
+    try {
+      query = this.db.query(
+        `SELECT value FROM messages WHERE key LIKE $pattern ORDER BY created_at DESC LIMIT $limit OFFSET $offset`,
+      );
+      const rows = query.all({
+        $pattern: `${chatJid}-%`,
+        $limit: limit,
+        $offset: offset,
+      }) as Array<{ value: string }>;
+
+      return rows.map((row) => JSON.parse(row.value, BufferJSON.reviver));
+    } catch (error) {
+      logger.error(
+        { error, chatJid },
+        '[DatabaseQueries] Error listing messages',
+      );
       throw error;
     } finally {
       query?.finalize();

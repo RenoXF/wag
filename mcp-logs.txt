@@ -1,0 +1,13 @@
+{"level":30,"time":"2026-07-07T03:06:03.460Z","pid":30615,"hostname":"iamraf","msg":"Starting WhatsApp MCP Server..."}
+{"level":30,"time":"2026-07-07T03:06:03.461Z","pid":30615,"hostname":"iamraf","msg":"Initializing database..."}
+{"level":30,"time":"2026-07-07T03:06:03.536Z","pid":30615,"hostname":"iamraf","msg":"Database initialized successfully."}
+{"level":30,"time":"2026-07-07T03:06:03.536Z","pid":30615,"hostname":"iamraf","msg":"Attempting to connect to WhatsApp..."}
+{"level":30,"time":"2026-07-07T03:06:03.925Z","pid":30615,"hostname":"iamraf","msg":"WhatsApp connection process initiated."}
+{"level":30,"time":"2026-07-07T03:06:03.925Z","pid":30615,"hostname":"iamraf","msg":"Starting MCP server..."}
+{"level":30,"time":"2026-07-07T03:06:03.925Z","pid":30615,"hostname":"iamraf","msg":"Initializing MCP server..."}
+{"level":30,"time":"2026-07-07T03:06:03.926Z","pid":30615,"hostname":"iamraf","msg":"MCP server configured. Connecting stdio transport..."}
+{"level":30,"time":"2026-07-07T03:06:03.927Z","pid":30615,"hostname":"iamraf","msg":"MCP transport connected. Server is ready and listening via stdio."}
+{"level":30,"time":"2026-07-07T03:06:03.927Z","pid":30615,"hostname":"iamraf","msg":"MCP Server setup complete. Waiting for requests from client..."}
+{"level":30,"time":"2026-07-07T03:06:03.927Z","pid":30615,"hostname":"iamraf","msg":"MCP Server started and listening."}
+{"level":30,"time":"2026-07-07T03:06:03.927Z","pid":30615,"hostname":"iamraf","msg":"Application setup complete. Running..."}
+{"level":30,"time":"2026-07-07T04:09:56.181Z","pid":30615,"hostname":"iamraf","msg":"[MCP Resource] Request for schema://whatsapp/main"}

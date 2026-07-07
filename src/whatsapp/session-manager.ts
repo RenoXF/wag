@@ -40,7 +40,7 @@ export class SessionManager {
    */
   private loadSessionsFromDatabase(): void {
     try {
-      const stmt = db.prepare('SELECT * FROM connections');
+      const stmt = db.query('SELECT * FROM connections');
       const connections = stmt.all() as SessionState[];
 
       logger.info(
@@ -115,7 +115,7 @@ export class SessionManager {
         created_at: Date.now(),
       };
 
-      const stmt = db.prepare(`
+      const stmt = db.query(`
         INSERT INTO connections (id, name, phoneNumber, webhookUrl, qrCode, pairCode, status, last_connected_at, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
@@ -155,7 +155,7 @@ export class SessionManager {
     lastConnectedAt?: number,
   ): void {
     try {
-      const stmt = db.prepare(`
+      const stmt = db.query(`
         UPDATE connections
         SET status = ?, last_connected_at = ?
         WHERE id = ?
@@ -312,7 +312,7 @@ export class SessionManager {
    */
   getAllSessionsFromDB(): SessionState[] {
     try {
-      const stmt = db.prepare(
+      const stmt = db.query(
         'SELECT * FROM connections ORDER BY created_at DESC',
       );
       return stmt.all() as SessionState[];
@@ -327,7 +327,7 @@ export class SessionManager {
    */
   getSessionFromDB(id: string): SessionState | null {
     try {
-      const stmt = db.prepare('SELECT * FROM connections WHERE id = ?');
+      const stmt = db.query('SELECT * FROM connections WHERE id = ?');
       return stmt.get(id) as SessionState | null;
     } catch (err) {
       logger.error(
@@ -343,7 +343,7 @@ export class SessionManager {
    */
   deleteSessionFromDB(id: string): boolean {
     try {
-      const stmt = db.prepare('DELETE FROM connections WHERE id = ?');
+      const stmt = db.query('DELETE FROM connections WHERE id = ?');
       stmt.run(id);
       return true;
     } catch (err) {
