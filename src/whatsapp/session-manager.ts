@@ -105,7 +105,7 @@ export class SessionManager {
       const status = session.getStatus();
       const sessionState: SessionState = {
         id: session.id,
-        name: name ?? session.id, // You can customize this
+        name: name ?? session.id,
         phoneNumber: session.phoneNumber,
         webhookUrl: session.webhookUrl,
         qrCode: session.getQrCode(),
@@ -138,11 +138,8 @@ export class SessionManager {
         sessionState.last_connected_at,
         sessionState.created_at,
       );
-    } catch (err) {
-      logger.error(
-        { err, sessionId: session.id },
-        '[SessionManager] Error saving session',
-      );
+    } catch (_err) {
+      // Silently ignore - DB may be closed during shutdown/logout
     }
   }
 
@@ -166,11 +163,8 @@ export class SessionManager {
         lastConnectedAt ?? (status === 'open' ? Date.now() : 0),
         sessionId,
       );
-    } catch (err) {
-      logger.error(
-        { err, sessionId },
-        '[SessionManager] Error updating status',
-      );
+    } catch (_err) {
+      // Silently ignore - DB may be closed during shutdown/logout
     }
   }
 
@@ -186,18 +180,21 @@ export class SessionManager {
 
     // QR code received
     session.on('qr', (qr) => {
+      if (!this.sessions.has(session.id)) return;
       this.sessions.set(session.id, session);
       this.saveSessionToDatabase(session);
     });
 
     // Pairing code received
     session.on('pairing-code', (code) => {
+      if (!this.sessions.has(session.id)) return;
       this.sessions.set(session.id, session);
       this.saveSessionToDatabase(session);
     });
 
     // Authenticated
     session.on('authenticated', () => {
+      if (!this.sessions.has(session.id)) return;
       this.sessions.set(session.id, session);
       this.saveSessionToDatabase(session);
       this.updateSessionStatus(session.id, 'open', Date.now());
@@ -205,12 +202,14 @@ export class SessionManager {
 
     // Connection closed
     session.on('connection-close', (statusCode) => {
+      if (!this.sessions.has(session.id)) return;
       this.saveSessionToDatabase(session);
       this.updateSessionStatus(session.id, 'close');
     });
 
     // Error occurred
     session.on('error', (error) => {
+      if (!this.sessions.has(session.id)) return;
       this.saveSessionToDatabase(session);
       this.updateSessionStatus(session.id, 'close');
     });
@@ -305,6 +304,13 @@ export class SessionManager {
     } catch (error) {
       return false;
     }
+  }
+
+  /**
+   * Remove session from memory only (no DB update, no disconnect)
+   */
+  removeSessionFromMap(id: string): void {
+    this.sessions.delete(id);
   }
 
   /**

@@ -7,11 +7,19 @@ import { stringify } from 'qs';
 import icon from '../../assets/icon.ico' with { type: 'file' };
 import clientCss from './client/client.css' with { type: 'text' };
 import indexClient from './client/index.html' with { type: 'text' };
+import apiDocs from './client/api-docs.html' with { type: 'text' };
 import { connections } from './connections';
 import { logs } from './logs';
 import { messages } from './messages';
 
 const app = new Elysia()
+  .onRequest(({ request }) => {
+    const url = new URL(request.url);
+    if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
+      url.pathname = url.pathname.slice(0, -1);
+      request = new Request(url.toString(), request);
+    }
+  })
   .use(
     openapi({
       path: '/docs',
@@ -88,6 +96,19 @@ const app = new Elysia()
       set.headers['content-type'] = 'text/html';
 
       return indexClient;
+    },
+    {
+      detail: {
+        hide: true,
+      },
+    },
+  )
+  .get(
+    '/docs/api',
+    ({ set }) => {
+      set.headers['content-type'] = 'text/html';
+
+      return apiDocs;
     },
     {
       detail: {

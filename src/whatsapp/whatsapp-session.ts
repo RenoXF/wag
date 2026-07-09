@@ -76,6 +76,10 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
   private webhookMutex = new Mutex();
   private pruneJob: Cron | null = null;
 
+  private dailyMessageCount: number = 0;
+  private dailyMessageDate: string = '';
+  private dailyMessageLimit: number = 0;
+
   private _connectionState: WAConnectionState = 'close';
   private _isNewSession: boolean = false;
 
@@ -789,7 +793,11 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
    */
   async destroy(): Promise<void> {
     await this.disconnect();
-    await rm(this.dbDirectory, { force: true, recursive: true });
+    try {
+      await rm(this.dbDirectory, { force: true, recursive: true });
+    } catch (err) {
+      this.logger.error({ err, dir: this.dbDirectory }, 'Failed to remove session directory');
+    }
   }
 
   /**
@@ -807,7 +815,27 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
     content: AnyMessageContent,
     options: MiscMessageGenerationOptions | undefined = undefined,
     sendPresence: boolean = false,
+    delay?: number,
+    dailyLimit?: number,
   ) {
+    // Daily message limit check
+    if (dailyLimit && dailyLimit > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      if (this.dailyMessageDate !== today) {
+        this.dailyMessageDate = today;
+        this.dailyMessageCount = 0;
+      }
+      if (this.dailyMessageCount >= dailyLimit) {
+        this.logger.warn(
+          `[${this.sessionId}]: Daily message limit reached (${dailyLimit}) for jid: ${jid}`,
+        );
+        throw new Error(`[${this.sessionId}] Daily message limit reached (${dailyLimit})`);
+      }
+      this.dailyMessageCount++;
+      this.logger.info(
+        `[${this.sessionId}]: Daily message count: ${this.dailyMessageCount}/${dailyLimit}`,
+      );
+    }
     const send = async () => {
       this.logger.info(
         `[${this.sessionId}]: Sending message to jid: ${jid}, with id: ${id}`,
@@ -843,7 +871,7 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
               'sendPresenceUpdate composing error',
             ),
           );
-        await Bun.sleep(randomInt(10, 15) * 100);
+        await Bun.sleep(randomInt(2, 5) * 1000);
         await this.socket
           .sendPresenceUpdate('paused', jid)
           .catch((r) =>
@@ -851,7 +879,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           );
         await Bun.sleep(randomInt(10, 15) * 100);
       } else {
-        await Bun.sleep(randomInt(10, 20) * 1000);
+        const sleepMs = Math.round((delay ?? 10) * 1000 * (0.8 + Math.random() * 0.4));
+        await Bun.sleep(sleepMs);
       }
 
       this.logger.info(
@@ -863,7 +892,8 @@ export class WhatsAppSession extends EventEmitter<WhatsAppSessionEvents> {
           throw new Error(`[${this.sessionId}] sendMessage error: ${r}`);
         });
 
-      await Bun.sleep(randomInt(10, 20) * 1000);
+      const afterSleepMs = Math.round((delay ?? 10) * 1000 * (0.8 + Math.random() * 0.4));
+      await Bun.sleep(afterSleepMs);
     };
 
     const sendWithRetry = async () => {

@@ -71,7 +71,8 @@ export const connections = new Elysia({
       try {
         const { deviceId, phoneNumber, webhookUrl, name } = body;
 
-        if (webhookUrl) {
+        // Skip webhook validation if SKIP_WEBHOOK_VALIDATION=true or no webhookUrl
+        if (webhookUrl && process.env.SKIP_WEBHOOK_VALIDATION !== 'true') {
           try {
             const res = await fetch(webhookUrl, {
               method: 'POST',
@@ -205,6 +206,7 @@ export const connections = new Elysia({
           minLength: 1,
           pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
+        webhookUrl: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Stop a connection',
@@ -220,11 +222,16 @@ export const connections = new Elysia({
       try {
         const session = sessionManager.getSession(id);
         if (session) {
-          await session.logout(); // This will delete auth data
-          await sessionManager.removeSession(id);
+          sessionManager.removeSessionFromMap(id);
+          await session.destroy();
+        } else {
+          // Session not in map but folder may still exist
+          const { rm } = await import('node:fs/promises');
+          const { join } = await import('node:path');
+          const sessionDir = join(process.cwd(), 'session_data', id);
+          await rm(sessionDir, { force: true, recursive: true }).catch(() => {});
         }
 
-        // Delete from database
         sessionManager.deleteSessionFromDB(id);
 
         return {
@@ -245,6 +252,7 @@ export const connections = new Elysia({
           minLength: 1,
           pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
+        webhookUrl: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Logout and delete session',

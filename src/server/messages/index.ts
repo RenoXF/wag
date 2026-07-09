@@ -195,10 +195,13 @@ export const messages = new Elysia({
       validateJid(jid);
 
       const id = body.id ?? null;
+      const delay = body.delay ?? undefined;
+      const sendPresence = body.sendPresence ?? false;
+      const dailyLimit = body.dailyLimit ?? undefined;
 
       whatsapp.sendMessage(id ?? Bun.randomUUIDv7(), jid, {
         text: body.message,
-      });
+      }, undefined, sendPresence, delay, dailyLimit);
 
       return {
         success: true,
@@ -216,6 +219,9 @@ export const messages = new Elysia({
           pattern: '^[a-zA-Z0-9_\\-:@\.\|\!]+$',
         }),
         id: t.Optional(t.Nullable(t.String())),
+        delay: t.Optional(t.Number({ minimum: 0, maximum: 300 })),
+        sendPresence: t.Optional(t.Boolean()),
+        dailyLimit: t.Optional(t.Number({ minimum: 1, maximum: 1000 })),
         message: t.String({
           minLength: 1,
           maxLength: 4096,
