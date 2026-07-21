@@ -10,7 +10,7 @@
     "email": "vermaysha@gmail.com",
     "url": "https://vermaysha.com"
   },
-  "homepage": "https://github.com/RenoXF/wag",
+  "homepage": "https://github.com/vermaysha/wag",
   "keywords": [
     "whatsapp-server",
     "whatsapp-api-server",
@@ -19,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/RenoXF/wag.git"
+    "url": "https://github.com/vermaysha/wag.git"
   },
   "readme": "https://github.com/vermaysha/README.md",
   "private": true,
