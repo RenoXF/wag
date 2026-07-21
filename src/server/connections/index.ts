@@ -229,7 +229,9 @@ export const connections = new Elysia({
           const { rm } = await import('node:fs/promises');
           const { join } = await import('node:path');
           const sessionDir = join(process.cwd(), 'session_data', id);
-          await rm(sessionDir, { force: true, recursive: true }).catch(() => {});
+          await rm(sessionDir, { force: true, recursive: true }).catch(
+            () => {},
+          );
         }
 
         sessionManager.deleteSessionFromDB(id);

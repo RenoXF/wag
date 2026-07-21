@@ -1,1016 +1,865 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WhatsApp Gateway API - Dashboard</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-      rel="stylesheet"
-    />
-    <link rel="shortcut icon" href="./icon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="./client.css" />
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  </head>
-  <body>
-    <div class="app">
-      <!-- Sidebar -->
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-brand">
-            <i class="bi bi-whatsapp"></i>
-            <span>WAG</span>
-          </div>
-          <button class="icon-btn" id="addDeviceBtn" title="Add Device">
-            <i class="bi bi-plus-lg"></i>
-          </button>
-        </div>
-
-        <div class="sidebar-search">
-          <input
-            type="text"
-            placeholder="Search devices..."
-            id="searchDevice"
-          />
-        </div>
-
-        <div class="device-list" id="deviceList">
-          <div class="empty-state-small">
-            <p>No devices</p>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Main Panel -->
-      <main class="main-panel" id="mainPanel">
-        <!-- Device Dashboard -->
-        <div class="device-dashboard" id="deviceDashboard">
-          <div class="dashboard-header">
-            <h2><i class="bi bi-whatsapp"></i> WhatsApp Gateway</h2>
-            <button class="btn success" onclick="document.getElementById('addDeviceModal').style.display='flex'">
-              <i class="bi bi-plus-lg"></i> Add Device
-            </button>
-          </div>
-          <div class="device-cards" id="deviceCards">
-            <div class="empty-state">
-              <i class="bi bi-inbox"></i>
-              <p>No devices yet</p>
-              <small>Click "Add Device" to get started</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat Panel (hidden by default) -->
-        <div class="chat-panel" id="chatPanel" style="display: none">
-          <!-- Chat Header -->
-          <div class="chat-header">
-            <div class="chat-header-info">
-              <div class="chat-avatar">
-                <i class="bi bi-phone"></i>
-              </div>
-              <div>
-                <div class="chat-name" id="chatDeviceName">Device</div>
-                <div class="chat-status" id="chatDeviceStatus">Offline</div>
-              </div>
-            </div>
-            <div class="chat-actions">
-              <button class="icon-btn" id="refreshChatBtn" title="Refresh">
-                <i class="bi bi-arrow-clockwise"></i>
-              </button>
-              <button class="icon-btn" id="showQrBtn" title="Show QR Code">
-                <i class="bi bi-qr-code"></i>
-              </button>
-              <button class="icon-btn" id="stopDeviceBtn" title="Stop Device">
-                <i class="bi bi-stop-circle"></i>
-              </button>
-              <button
-                class="icon-btn danger"
-                id="logoutDeviceBtn"
-                title="Logout"
-              >
-                <i class="bi bi-box-arrow-right"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Tabs -->
-          <div class="chat-tabs">
-            <button class="tab active" data-tab="chats">
-              <i class="bi bi-chat-dots"></i> Chats
-            </button>
-            <button class="tab" data-tab="logs">
-              <i class="bi bi-file-text"></i> Logs
-            </button>
-          </div>
-
-          <!-- Chat Tab -->
-          <div class="tab-content active" id="chatsTab">
-            <div class="chat-layout">
-              <!-- Chat List (JIDs) -->
-              <div class="chat-list" id="chatList">
-                <div class="empty-state-small">
-                  <p>No chats yet</p>
-                </div>
-              </div>
-
-              <!-- Message Area -->
-              <div class="message-area" id="messageArea">
-                <div class="empty-state-small" id="selectChatHint">
-                  <i class="bi bi-chat-left-text"></i>
-                  <p>Select a chat to view messages</p>
-                </div>
-                <div
-                  class="messages-container"
-                  id="messagesContainer"
-                  style="display: none"
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Logs Tab -->
-          <div class="tab-content" id="logsTab" style="display: none">
-            <div class="logs-container" id="logsContainer">
-              <div class="empty-state-small">
-                <p>No logs</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Message Form -->
-          <div class="message-form" id="messageForm" style="display: none">
-            <input
-              type="text"
-              id="messageInput"
-              placeholder="Type a message..."
-              maxlength="4096"
-            />
-            <button class="send-btn" id="sendBtn">
-              <i class="bi bi-send-fill"></i>
-            </button>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    <!-- QR Modal -->
-    <div class="modal-overlay" id="qrModal" style="display: none">
-      <div class="modal">
-        <div class="modal-header">
-          <h3><i class="bi bi-qr-code"></i> Authentication</h3>
-          <button class="icon-btn" id="closeQrModal">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div id="qrContent" class="qr-content">
-            <div class="spinner"></div>
-            <p>Loading...</p>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <small class="text-muted">Auto-refreshes every 5 seconds</small>
-        </div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WAG - WhatsApp Gateway</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<link rel="stylesheet" href="client.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand"><i class="bi bi-whatsapp"></i> WAG</div>
+      <div class="sidebar-actions">
+        <button class="icon-btn" onclick="showAddDeviceModal()" title="Add Device"><i class="bi bi-plus-lg"></i></button>
+        <button class="icon-btn" onclick="showDeviceModal()" title="Devices"><i class="bi bi-phone"></i></button>
       </div>
     </div>
+    <div class="search-wrap">
+      <input class="search-box" id="searchInput" placeholder="Search or start new chat" oninput="filterChats()">
+    </div>
+    <div class="chat-list" id="chatList"></div>
+  </aside>
 
-    <!-- Logout Modal -->
-    <div class="modal-overlay" id="logoutModal" style="display: none">
-      <div class="modal modal-danger">
-        <div class="modal-header danger">
-          <h3><i class="bi bi-exclamation-triangle"></i> Confirm Logout</h3>
-          <button class="icon-btn" id="closeLogoutModal">
-            <i class="bi bi-x-lg"></i>
-          </button>
+  <main class="main-panel">
+    <div id="chatView" style="display:none;flex-direction:column;height:100%">
+      <div class="chat-header">
+        <div class="chat-avatar" id="chatAvatar">?</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name" id="chatName">Loading...</div>
+          <div class="chat-header-status" id="chatStatus">offline</div>
         </div>
-        <div class="modal-body">
-          <p>Logout device <strong id="logoutDeviceId"></strong>?</p>
-          <div class="alert warning">
-            <i class="bi bi-exclamation-circle"></i>
-            This will delete all session data. You need to re-authenticate.
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn secondary" id="cancelLogoutBtn">Cancel</button>
-          <button class="btn danger" id="confirmLogoutBtn">
-            <i class="bi bi-box-arrow-right"></i> Logout & Delete
-          </button>
+        <div class="sidebar-actions">
+          <button class="icon-btn" onclick="fetchMessages()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
-    </div>
-
-    <!-- Add Device Modal -->
-    <div class="modal-overlay" id="addDeviceModal" style="display: none">
-      <div class="modal">
-        <div class="modal-header">
-          <h3><i class="bi bi-plus-circle"></i> Add Device</h3>
-          <button class="icon-btn" id="closeAddModal">
-            <i class="bi bi-x-lg"></i>
-          </button>
+      <div class="messages-area" id="messagesArea"></div>
+      <div class="reply-preview" id="replyPreview" style="display:none">
+        <div class="reply-preview-line">
+          <div class="reply-preview-name" id="replyName"></div>
+          <div class="reply-preview-text" id="replyText"></div>
         </div>
-        <div class="modal-body">
-          <form id="addDeviceForm">
-            <div class="form-group">
-              <label>Device ID <span class="required">*</span></label>
-              <input
-                type="text"
-                id="newDeviceId"
-                required
-                pattern="[a-zA-Z0-9_-]+"
-              />
-              <small>Alphanumeric, dash, underscore</small>
-            </div>
-            <div class="form-group">
-              <label>Session Name</label>
-              <input type="text" id="newDeviceName" />
-            </div>
-            <div class="form-group">
-              <label>Phone Number</label>
-              <input
-                type="tel"
-                id="newDevicePhone"
-                placeholder="+6281234567890"
-              />
-              <small>Optional: Use pairing code instead of QR</small>
-            </div>
-            <div class="form-group">
-              <label>Webhook URL</label>
-              <div class="input-with-btn">
-                <input
-                  type="url"
-                  id="newDeviceWebhook"
-                  placeholder="https://example.com/webhook"
-                />
-                <button
-                  type="button"
-                  class="btn secondary small"
-                  id="testWebhookBtn"
-                >
-                  <i class="bi bi-check-circle"></i> Test
-                </button>
-              </div>
-              <div
-                id="webhookStatus"
-                class="webhook-status"
-                style="display: none"
-              ></div>
-            </div>
-            <button type="submit" class="btn success full-width">
-              <i class="bi bi-play-circle"></i> Start Session
-            </button>
-          </form>
+        <span class="reply-close" onclick="cancelReply()">&times;</span>
+      </div>
+      <div class="input-area" style="position:relative">
+        <button class="icon-btn" onclick="toggleAttachMenu()"><i class="bi bi-paperclip"></i></button>
+        <input id="msgInput" placeholder="Type a message" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="icon-btn primary" onclick="sendMsg()"><i class="bi bi-send"></i></button>
+        <div class="attach-menu" id="attachMenu" style="display:none">
+          <div class="attach-item" onclick="pickFile('image/*')"><i style="background:#ef5350"><i class="bi bi-image"></i></i><span>Image</span></div>
+          <div class="attach-item" onclick="pickFile('audio/*')"><i style="background:#ff9800"><i class="bi bi-music-note"></i></i><span>Audio</span></div>
+          <div class="attach-item" onclick="pickFile('video/*')"><i style="background:#4caf50"><i class="bi bi-camera-reels"></i></i><span>Video</span></div>
+          <div class="attach-item" onclick="pickFile('*/*')"><i style="background:#2196f3"><i class="bi bi-file-earmark"></i></i><span>Document</span></div>
         </div>
+        <input type="file" id="fileInput" style="display:none" onchange="sendMedia(event)">
       </div>
     </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <script>
-      // ============================================
-      // Configuration
-      // ============================================
-      const API_URL = window.location.origin;
-      let autoRefreshInterval = null;
-      let qrRefreshInterval = null;
-      let logsSseConnection = null;
-      let currentDeviceId = null;
-      let currentChatJid = null;
-
-      // ============================================
-      // Utility Functions
-      // ============================================
-      function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-          <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'error' ? 'x-circle-fill' : 'info-circle-fill'}"></i>
-          <span>${message}</span>
-        `;
-        container.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 10);
-        setTimeout(() => {
-          toast.classList.remove('show');
-          setTimeout(() => toast.remove(), 300);
-        }, 3000);
-      }
-
-      function formatDate(timestamp) {
-        if (!timestamp) return '';
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      }
-
-      function formatDateTime(timestamp) {
-        if (!timestamp) return '';
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleString('id-ID');
-      }
-
-      function getStatusColor(status) {
-        const colors = {
-          open: '#25d366',
-          connecting: '#ffc107',
-          close: '#dc3545',
-        };
-        return colors[status] || '#6c757d';
-      }
-
-      function getStatusText(status) {
-        const texts = {
-          open: 'Online',
-          connecting: 'Connecting',
-          close: 'Offline',
-        };
-        return texts[status] || status;
-      }
-
-      function getChatName(jid) {
-        if (jid.endsWith('@g.us')) return 'Group: ' + jid.split('@')[0];
-        if (jid.endsWith('@lid')) return 'LID: ' + jid.split('@')[0];
-        return jid.split('@')[0];
-      }
-
-      function getChatAvatar(jid) {
-        if (jid.endsWith('@g.us')) return '<i class="bi bi-people-fill"></i>';
-        return '<i class="bi bi-person-fill"></i>';
-      }
-
-      // ============================================
-      // API Functions
-      // ============================================
-      async function apiRequest(endpoint, options = {}) {
-        try {
-          const response = await fetch(API_URL + endpoint, {
-            headers: {
-              'Content-Type': 'application/json',
-              ...options.headers,
-            },
-            method: options.method || 'GET',
-            body: options.body ? JSON.stringify(options.body) : undefined,
-          });
-
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.message || data.error || 'API request failed');
-          }
-          return data;
-        } catch (error) {
-          console.error('API Error:', error);
-          throw error;
-        }
-      }
-
-      // ============================================
-      // Device Management
-      // ============================================
-      async function fetchDevices() {
-        try {
-          const data = await apiRequest('/connections');
-          renderDeviceList(data.data || []);
-        } catch (error) {
-          showToast('Failed to fetch devices: ' + error.message, 'error');
-        }
-      }
-
-      function renderDeviceList(devices) {
-        const sidebar = document.getElementById('deviceList');
-        const cards = document.getElementById('deviceCards');
-        const search = document.getElementById('searchDevice').value.toLowerCase();
-
-        const filtered = devices.filter(
-          (d) =>
-            d.id.toLowerCase().includes(search) ||
-            (d.name && d.name.toLowerCase().includes(search)),
-        );
-
-        // Sidebar list
-        if (filtered.length === 0) {
-          sidebar.innerHTML = '<div class="empty-state-small"><p>No devices found</p></div>';
-        } else {
-          sidebar.innerHTML = filtered
-            .map(
-              (d) => `
-            <div class="device-item ${currentDeviceId === d.id ? 'active' : ''}"
-                 onclick="selectDevice('${d.id}')">
-              <div class="device-avatar" style="background: ${getStatusColor(d.status)}">
-                <i class="bi bi-phone"></i>
-              </div>
-              <div class="device-info">
-                <div class="device-name">${d.name || d.id}</div>
-                <div class="device-status">${getStatusText(d.status)}</div>
-              </div>
-            </div>
-          `,
-            )
-            .join('');
-        }
-
-        // Dashboard cards
-        if (!currentDeviceId) {
-          if (filtered.length === 0) {
-            cards.innerHTML = `
-              <div class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <p>No devices yet</p>
-                <small>Click "Add Device" to get started</small>
-              </div>
-            `;
-          } else {
-            cards.innerHTML = filtered
-              .map(
-                (d) => `
-              <div class="device-card">
-                <div class="device-card-header">
-                  <div class="device-card-avatar" style="background: ${getStatusColor(d.status)}">
-                    <i class="bi bi-phone"></i>
-                  </div>
-                  <div class="device-card-info">
-                    <h3>${d.name || d.id}</h3>
-                    <span class="device-card-id">ID: ${d.id}</span>
-                  </div>
-                  <span class="status-badge ${d.status}">${getStatusText(d.status)}</span>
-                </div>
-                <div class="device-card-body">
-                  <div class="device-card-row">
-                    <i class="bi bi-telephone"></i>
-                    <span>${d.phoneNumber || 'Not linked'}</span>
-                  </div>
-                  <div class="device-card-row">
-                    <i class="bi bi-link-45deg"></i>
-                    <span class="webhook-url">${d.webhookUrl || 'No webhook'}</span>
-                  </div>
-                  <div class="device-card-row">
-                    <i class="bi bi-clock"></i>
-                    <span>${formatDateTime(d.last_connected_at) || 'Never'}</span>
-                  </div>
-                </div>
-                <div class="device-card-actions">
-                  ${d.status === 'close' ? `
-                    <button class="btn success small" onclick="quickStart('${d.id}')">
-                      <i class="bi bi-play-fill"></i> Start
-                    </button>
-                  ` : `
-                    <button class="btn secondary small" onclick="quickStop('${d.id}')">
-                      <i class="bi bi-stop-fill"></i> Stop
-                    </button>
-                  `}
-                  <button class="btn secondary small" onclick="selectDevice('${d.id}')">
-                    <i class="bi bi-chat-dots"></i> Open
-                  </button>
-                </div>
-              </div>
-            `,
-              )
-              .join('');
-          }
-        }
-      }
-
-      async function quickStart(deviceId) {
-        try {
-          await apiRequest('/connections/start', {
-            method: 'POST',
-            body: { deviceId },
-          });
-          showToast('Device started!', 'success');
-          setTimeout(() => fetchDevices(), 500);
-        } catch (error) {
-          showToast('Failed: ' + error.message, 'error');
-        }
-      }
-
-      async function quickStop(deviceId) {
-        try {
-          await apiRequest('/connections/stop', {
-            method: 'POST',
-            body: { deviceId },
-          });
-          showToast('Device stopped', 'success');
-          setTimeout(() => fetchDevices(), 500);
-        } catch (error) {
-          showToast('Failed: ' + error.message, 'error');
-        }
-      }
-
-      async function selectDevice(deviceId) {
-        currentDeviceId = deviceId;
-        currentChatJid = null;
-
-        document.getElementById('deviceDashboard').style.display = 'none';
-        document.getElementById('chatPanel').style.display = 'flex';
-
-        await fetchDeviceInfo();
-        await fetchChatList();
-        showSelectChatHint();
-
-        document.querySelectorAll('.device-item').forEach((el) => el.classList.remove('active'));
-        document.querySelector(`.device-item[onclick*="${deviceId}"]`)?.classList.add('active');
-      }
-
-      async function fetchDeviceInfo() {
-        try {
-          const data = await apiRequest(`/connections/${currentDeviceId}`);
-          const device = data.data;
-
-          document.getElementById('chatDeviceName').textContent = device.name || device.id;
-          document.getElementById('chatDeviceStatus').textContent = getStatusText(device.status);
-          document.getElementById('chatDeviceStatus').style.color = getStatusColor(device.status);
-
-          const stopBtn = document.getElementById('stopDeviceBtn');
-          stopBtn.style.display = device.status === 'close' ? 'none' : 'flex';
-        } catch (error) {
-          showToast('Failed to fetch device info: ' + error.message, 'error');
-        }
-      }
-
-      // ============================================
-      // Chat List
-      // ============================================
-      async function fetchChatList() {
-        if (!currentDeviceId) return;
-
-        try {
-          const data = await apiRequest(`/messages/${currentDeviceId}`);
-          renderChatList(data.data || []);
-        } catch (error) {
-          console.error('Failed to fetch chat list:', error);
-        }
-      }
-
-      function renderChatList(chats) {
-        const container = document.getElementById('chatList');
-
-        if (chats.length === 0) {
-          container.innerHTML =
-            '<div class="empty-state-small"><i class="bi bi-chat-dots"></i><p>No chats yet</p></div>';
-          return;
-        }
-
-        container.innerHTML = chats
-          .map(
-            (chat) => {
-              const lastMsg = chat.lastMessage;
-              let lastMsgText = '';
-              let lastMsgTime = '';
-              let lastMsgFrom = '';
-
-              if (lastMsg && lastMsg.message) {
-                lastMsgText =
-                  lastMsg.message.conversation ||
-                  lastMsg.message.extendedTextMessage?.text ||
-                  '[Media]';
-                lastMsgTime = formatDate(lastMsg.messageTimestamp);
-                lastMsgFrom = lastMsg.key?.fromMe ? 'You' : '';
-              }
-
-              return `
-            <div class="chat-item ${currentChatJid === chat.chatJid ? 'active' : ''}"
-                 onclick="selectChat('${chat.chatJid}')">
-              <div class="chat-item-avatar">${getChatAvatar(chat.chatJid)}</div>
-              <div class="chat-item-info">
-                <div class="chat-item-header">
-                  <span class="chat-item-name">${getChatName(chat.chatJid)}</span>
-                  <span class="chat-item-time">${lastMsgTime}</span>
-                </div>
-                <div class="chat-item-preview">
-                  ${lastMsgFrom ? `<strong>${lastMsgFrom}:</strong> ` : ''}${lastMsgText.substring(0, 50)}${lastMsgText.length > 50 ? '...' : ''}
-                </div>
-              </div>
-              <div class="chat-item-badge">${chat.count}</div>
-            </div>
-          `;
-          })
-          .join('');
-      }
-
-      async function selectChat(chatJid) {
-        currentChatJid = chatJid;
-
-        document.getElementById('selectChatHint').style.display = 'none';
-        document.getElementById('messagesContainer').style.display = 'flex';
-        document.getElementById('messageForm').style.display = 'flex';
-
-        document.querySelectorAll('.chat-item').forEach((el) => el.classList.remove('active'));
-        document.querySelector(`.chat-item[onclick*="${chatJid}"]`)?.classList.add('active');
-
-        await fetchMessages();
-      }
-
-      function showSelectChatHint() {
-        document.getElementById('selectChatHint').style.display = 'flex';
-        document.getElementById('messagesContainer').style.display = 'none';
-        document.getElementById('messageForm').style.display = 'none';
-      }
-
-      // ============================================
-      // Messages
-      // ============================================
-      async function fetchMessages() {
-        if (!currentDeviceId || !currentChatJid) return;
-
-        try {
-          const data = await apiRequest(`/messages/${currentDeviceId}/${encodeURIComponent(currentChatJid)}`);
-          renderMessages(data.data || []);
-        } catch (error) {
-          console.error('Failed to fetch messages:', error);
-        }
-      }
-
-      function renderMessages(messages) {
-        const container = document.getElementById('messagesContainer');
-
-        if (messages.length === 0) {
-          container.innerHTML =
-            '<div class="empty-state-small"><p>No messages in this chat</p></div>';
-          return;
-        }
-
-        const sorted = messages.sort(
-          (a, b) => (a.messageTimestamp || 0) - (b.messageTimestamp || 0),
-        );
-
-        container.innerHTML = sorted
-          .map((msg) => {
-            const isMe = msg.key?.fromMe;
-            const text =
-              msg.message?.conversation ||
-              msg.message?.extendedTextMessage?.text ||
-              '[Media message]';
-            const time = formatDate(msg.messageTimestamp);
-
-            return `
-            <div class="message ${isMe ? 'outgoing' : 'incoming'}">
-              <div class="message-bubble">
-                <div class="message-text">${escapeHtml(text)}</div>
-                <div class="message-time">${time}</div>
-              </div>
-            </div>
-          `;
-          })
-          .join('');
-
-        container.scrollTop = container.scrollHeight;
-      }
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      // ============================================
-      // Send Message
-      // ============================================
-      async function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-
-        if (!message || !currentDeviceId || !currentChatJid) return;
-
-        try {
-          await apiRequest('/messages/send-text-message', {
-            method: 'POST',
-            body: {
-              deviceId: currentDeviceId,
-              recipient: currentChatJid,
-              message: message,
-            },
-          });
-
-          input.value = '';
-          showToast('Message sent!', 'success');
-          await fetchMessages();
-          await fetchChatList();
-        } catch (error) {
-          showToast('Failed to send: ' + error.message, 'error');
-        }
-      }
-
-      // ============================================
-      // Logs
-      // ============================================
-      function connectLogsSse() {
-        if (logsSseConnection) {
-          logsSseConnection.close();
-        }
-
-        if (!currentDeviceId) return;
-
-        const container = document.getElementById('logsContainer');
-        container.innerHTML = '';
-
-        logsSseConnection = new EventSource(`${API_URL}/logs/sse/${currentDeviceId}`);
-
-        logsSseConnection.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.data) {
-              data.data.forEach((log) => {
-                const logEl = document.createElement('div');
-                logEl.className = 'log-line';
-                logEl.textContent = `[${log.time || ''}] ${log.msg || JSON.stringify(log)}`;
-                container.appendChild(logEl);
-              });
-              container.scrollTop = container.scrollHeight;
-            }
-          } catch (e) {
-            console.error('Failed to parse log:', e);
-          }
-        };
-
-        logsSseConnection.onerror = () => {
-          container.innerHTML +=
-            '<div class="log-line error">Connection lost. Reconnecting...</div>';
-        };
-      }
-
-      function disconnectLogsSse() {
-        if (logsSseConnection) {
-          logsSseConnection.close();
-          logsSseConnection = null;
-        }
-      }
-
-      // ============================================
-      // QR Code
-      // ============================================
-      async function showQrCode() {
-        if (!currentDeviceId) return;
-
-        document.getElementById('qrModal').style.display = 'flex';
-        await refreshQrCode();
-
-        if (qrRefreshInterval) clearInterval(qrRefreshInterval);
-        qrRefreshInterval = setInterval(refreshQrCode, 5000);
-      }
-
-      async function refreshQrCode() {
-        if (!currentDeviceId) return;
-
-        const container = document.getElementById('qrContent');
-
-        try {
-          const data = await apiRequest(
-            `/connections/qr-code?deviceId=${encodeURIComponent(currentDeviceId)}`,
-          );
-
-          if (!data.success) throw new Error(data.message);
-
-          const { qrCode, pairingCode, hasQrCode, hasPairingCode } = data.data;
-
-          if ((hasQrCode && qrCode) || (hasPairingCode && pairingCode)) {
-            let html = '<div class="qr-grid">';
-
-            if (hasQrCode && qrCode) {
-              html += `
-                <div class="qr-section">
-                  <canvas id="qrCanvas"></canvas>
-                  <p><i class="bi bi-qr-code-scan"></i> Scan with WhatsApp</p>
-                </div>
-              `;
-            }
-
-            if (hasPairingCode && pairingCode) {
-              html += `
-                <div class="qr-section">
-                  <div class="pairing-code">${pairingCode}</div>
-                  <p><i class="bi bi-phone"></i> Enter code in WhatsApp</p>
-                  <button class="btn secondary small" onclick="copyPairingCode('${pairingCode}')">
-                    <i class="bi bi-clipboard"></i> Copy
-                  </button>
-                </div>
-              `;
-            }
-
-            html += '</div>';
-            container.innerHTML = html;
-
-            if (hasQrCode && qrCode) {
-              generateQrCode(qrCode);
-            }
-          } else {
-            container.innerHTML =
-              '<div class="alert info"><i class="bi bi-info-circle"></i> No QR code available. Session may already be authenticated.</div>';
-          }
-        } catch (error) {
-          container.innerHTML = `<div class="alert error"><i class="bi bi-exclamation-triangle"></i> ${error.message}</div>`;
-        }
-      }
-
-      async function generateQrCode(text) {
-        try {
-          const canvas = document.getElementById('qrCanvas');
-          if (canvas && typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(canvas, text, {
-              width: 200,
-              margin: 2,
-              color: { dark: '#000', light: '#fff' },
-            });
-          }
-        } catch (e) {
-          console.error('QR Code generation failed:', e);
-        }
-      }
-
-      function copyPairingCode(code) {
-        navigator.clipboard
-          .writeText(code)
-          .then(() => showToast('Copied!', 'success'))
-          .catch(() => showToast('Failed to copy', 'error'));
-      }
-
-      // ============================================
-      // Device Actions
-      // ============================================
-      async function startDevice(deviceId, name, phone, webhook) {
-        try {
-          const body = { deviceId };
-          if (name) body.name = name;
-          if (phone) body.phoneNumber = phone;
-          if (webhook) body.webhookUrl = webhook;
-
-          await apiRequest('/connections/start', { method: 'POST', body });
-          showToast('Device started!', 'success');
-          await fetchDevices();
-          setTimeout(() => selectDevice(deviceId), 500);
-        } catch (error) {
-          showToast('Failed: ' + error.message, 'error');
-        }
-      }
-
-      async function stopDevice() {
-        if (!currentDeviceId) return;
-
-        try {
-          await apiRequest('/connections/stop', {
-            method: 'POST',
-            body: { deviceId: currentDeviceId },
-          });
-          showToast('Device stopped', 'success');
-          await fetchDevices();
-          await fetchDeviceInfo();
-        } catch (error) {
-          showToast('Failed: ' + error.message, 'error');
-        }
-      }
-
-      async function logoutDevice() {
-        if (!currentDeviceId) return;
-
-        try {
-          await apiRequest('/connections/logout', {
-            method: 'POST',
-            body: { deviceId: currentDeviceId },
-          });
-          showToast('Device logged out', 'success');
-          currentDeviceId = null;
-          currentChatJid = null;
-          document.getElementById('chatPanel').style.display = 'none';
-          document.getElementById('deviceDashboard').style.display = 'flex';
-          await fetchDevices();
-        } catch (error) {
-          showToast('Failed: ' + error.message, 'error');
-        }
-      }
-
-      async function testWebhook() {
-        const url = document.getElementById('newDeviceWebhook').value.trim();
-        const status = document.getElementById('webhookStatus');
-
-        if (!url) {
-          status.style.display = 'none';
-          return;
-        }
-
-        status.style.display = 'block';
-        status.innerHTML = '<span class="text-muted">Testing...</span>';
-
-        try {
-          const res = await fetch(`${API_URL}/test-callback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ host: url }),
-          });
-          const data = await res.json();
-
-          if (res.ok) {
-            status.innerHTML = '<span class="webhook-ok"><i class="bi bi-check-circle"></i> Reachable</span>';
-          } else {
-            status.innerHTML = `<span class="webhook-error"><i class="bi bi-x-circle"></i> ${data.message}</span>`;
-          }
-        } catch (error) {
-          status.innerHTML = `<span class="webhook-error"><i class="bi bi-x-circle"></i> ${error.message}</span>`;
-        }
-      }
-
-      // ============================================
-      // Event Listeners
-      // ============================================
-      document.addEventListener('DOMContentLoaded', () => {
-        fetchDevices();
-        autoRefreshInterval = setInterval(fetchDevices, 10000);
-
-        document.getElementById('searchDevice').addEventListener('input', fetchDevices);
-
-        document.getElementById('addDeviceBtn').addEventListener('click', () => {
-          document.getElementById('addDeviceModal').style.display = 'flex';
-        });
-
-        document.getElementById('closeAddModal').addEventListener('click', () => {
-          document.getElementById('addDeviceModal').style.display = 'none';
-        });
-
-        document.getElementById('addDeviceForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const id = document.getElementById('newDeviceId').value.trim();
-          const name = document.getElementById('newDeviceName').value.trim();
-          const phone = document.getElementById('newDevicePhone').value.trim();
-          const webhook = document.getElementById('newDeviceWebhook').value.trim();
-
-          await startDevice(id, name, phone, webhook);
-          document.getElementById('addDeviceModal').style.display = 'none';
-          e.target.reset();
-
-          setTimeout(() => showQrCode(), 1500);
-        });
-
-        document.getElementById('testWebhookBtn').addEventListener('click', testWebhook);
-
-        document.getElementById('refreshChatBtn').addEventListener('click', async () => {
-          await fetchDevices();
-          if (currentDeviceId) {
-            await fetchDeviceInfo();
-            await fetchChatList();
-            if (currentChatJid) await fetchMessages();
-          }
-        });
-
-        document.getElementById('showQrBtn').addEventListener('click', showQrCode);
-        document.getElementById('closeQrModal').addEventListener('click', () => {
-          document.getElementById('qrModal').style.display = 'none';
-          if (qrRefreshInterval) clearInterval(qrRefreshInterval);
-        });
-
-        document.getElementById('stopDeviceBtn').addEventListener('click', stopDevice);
-
-        document.getElementById('logoutDeviceBtn').addEventListener('click', () => {
-          document.getElementById('logoutDeviceId').textContent = currentDeviceId;
-          document.getElementById('logoutModal').style.display = 'flex';
-        });
-
-        document.getElementById('closeLogoutModal').addEventListener('click', () => {
-          document.getElementById('logoutModal').style.display = 'none';
-        });
-
-        document.getElementById('cancelLogoutBtn').addEventListener('click', () => {
-          document.getElementById('logoutModal').style.display = 'none';
-        });
-
-        document.getElementById('confirmLogoutBtn').addEventListener('click', async () => {
-          document.getElementById('logoutModal').style.display = 'none';
-          await logoutDevice();
-        });
-
-        document.querySelectorAll('.chat-tabs .tab').forEach((tab) => {
-          tab.addEventListener('click', () => {
-            document.querySelectorAll('.chat-tabs .tab').forEach((t) => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            const tabName = tab.dataset.tab;
-            document.querySelectorAll('.tab-content').forEach((c) => {
-              c.style.display = 'none';
-              c.classList.remove('active');
-            });
-
-            if (tabName === 'chats') {
-              document.getElementById('chatsTab').style.display = 'flex';
-              document.getElementById('chatsTab').classList.add('active');
-              disconnectLogsSse();
-            } else if (tabName === 'logs') {
-              document.getElementById('logsTab').style.display = 'flex';
-              document.getElementById('logsTab').classList.add('active');
-              connectLogsSse();
-            }
-          });
-        });
-
-        document.getElementById('sendBtn').addEventListener('click', sendMessage);
-
-        document.getElementById('messageInput').addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-          }
-        });
-
-        document.querySelectorAll('.modal-overlay').forEach((modal) => {
-          modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.style.display = 'none';
-          });
-        });
+    <div class="empty-state" id="emptyState">
+      <i class="bi bi-whatsapp"></i>
+      <p>Select a chat to start messaging</p>
+    </div>
+  </main>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<div id="imageModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);cursor:zoom-out;align-items:center;justify-content:center" onclick="this.style.display='none'">
+  <img id="modalImage" style="max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain">
+</div>
+    <div id="addDeviceModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--panel-bg);border-radius:12px;padding:24px;width:420px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+    <h3 style="margin-bottom:16px;font-weight:600">Tambah Device Baru</h3>
+    <input id="newDeviceName" placeholder="Nama device (contoh: HP Sales)" style="width:100%;padding:10px 14px;border:none;border-radius:8px;background:var(--input-bg);color:var(--text);font-size:14px;outline:none;margin-bottom:10px">
+    <input id="newDevicePhone" placeholder="Nomor telepon untuk pairing via kode (opsional)" style="width:100%;padding:10px 14px;border:none;border-radius:8px;background:var(--input-bg);color:var(--text);font-size:14px;outline:none;margin-bottom:6px">
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">Kosongi untuk scan QR. Isi nomor untuk pairing via kode (lebih cepat).</p>
+    <input id="newDeviceWebhook" placeholder="URL callback (default: http://localhost:8000)" value="http://localhost:8000" style="width:100%;padding:10px 14px;border:none;border-radius:8px;background:var(--input-bg);color:var(--text-secondary);font-size:13px;outline:none;margin-bottom:16px">
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">Webhook URL adalah alamat server eBilling yang menerima notifikasi status device. Default: <code>http://localhost:8000</code></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="$('addDeviceModal').style.display='none'">Batal</button>
+      <button class="btn btn-success" onclick="createDevice()">Tambah & Scan QR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let currentDevice = null, currentJid = null;
+let devices = [], chats = [], replyTarget = null;
+let liveSse = null, pollTimer = null, msgOffset = 0, allMessages = [];
+
+// ── Helpers ──
+function $(id) { return document.getElementById(id); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function toast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  $('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+function showImage(src) {
+  $('modalImage').src = src;
+  $('imageModal').style.display = 'flex';
+}
+function mediaError(el) {
+  el.style.display = 'none';
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:8px;color:var(--text-secondary);font-style:italic;font-size:12px';
+  div.textContent = 'Media tidak tersedia';
+  el.parentElement.appendChild(div);
+}
+
+// ── Add Device Modal ──
+function showAddDeviceModal() {
+  $('newDeviceName').value = '';
+  $('newDevicePhone').value = '';
+  $('addDeviceModal').style.display = 'flex';
+  setTimeout(() => $('newDeviceName').focus(), 100);
+}
+
+async function createDevice() {
+  const name = $('newDeviceName').value.trim();
+  if (!name) { toast('Nama device wajib diisi', 'error'); return; }
+
+  const phone = $('newDevicePhone').value.trim() || null;
+  const webhookBase = $('newDeviceWebhook').value.trim().replace(/\/+$/, '') || 'http://localhost:8000';
+  const deviceId = crypto.randomUUID();
+
+  $('addDeviceModal').style.display = 'none';
+
+  try {
+    toast('Membuat device ' + name + '...');
+    const body = {
+      deviceId,
+      name,
+      webhookUrl: webhookBase + '/callback/whatsapp/' + deviceId,
+    };
+    if (phone) body.phoneNumber = phone;
+
+    await api('/connections/start', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    toast('Device dibuat');
+    await loadDevices();
+
+    await new Promise(r => setTimeout(r, 2000));
+
+    if (phone) {
+      await showPairingCode(deviceId);
+    } else {
+      await showQr(deviceId);
+    }
+  } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+}
+
+// ── Device Actions ──
+async function quickStart(deviceId) {
+  try {
+    await api('/connections/start', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId }),
+    });
+    toast('Device started');
+    loadDevices();
+    setTimeout(loadDevices, 2000);
+  } catch (e) { toast('Start failed: ' + e.message, 'error'); }
+}
+
+async function quickStop(deviceId) {
+  try {
+    await api('/connections/stop', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId }),
+    });
+    toast('Device stopped');
+    loadDevices();
+  } catch (e) { toast('Stop failed: ' + e.message, 'error'); }
+}
+
+async function showPairingCode(deviceId) {
+  try {
+    const conn = await api('/connections/' + deviceId);
+    const status = conn.data?.currentStatus;
+    if (status?.isLoggedIn) {
+      toast('Device sudah terhubung', 'error');
+      return;
+    }
+
+    // polling sampai pairing code tersedia
+    let pairCode = null;
+    for (let i = 0; i < 10; i++) {
+      const d = await api('/connections/qr-code?deviceId=' + deviceId);
+      pairCode = d.data?.pairingCode;
+      if (pairCode) break;
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
+    if (!pairCode) {
+      toast('Pairing code tidak tersedia, coba scan QR', 'error');
+      await showQr(deviceId);
+      return;
+    }
+
+    const existing = document.getElementById('qrCanvasContainer');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'qrCanvasContainer';
+    container.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:16px;padding:24px';
+    container.onclick = () => container.remove();
+
+    const label = document.createElement('div');
+    label.style.cssText = 'color:var(--text-secondary);font-size:13px;text-align:center';
+    label.textContent = 'Masukkan kode ini di WhatsApp > Linked Devices > Pair with phone number';
+
+    const codeDisplay = document.createElement('div');
+    codeDisplay.style.cssText = 'font-size:36px;font-weight:700;letter-spacing:6px;color:var(--text);background:var(--input-bg);padding:16px 32px;border-radius:12px;font-family:monospace';
+    codeDisplay.textContent = pairCode;
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'color:var(--text-secondary);font-size:12px;text-align:center';
+    hint.innerHTML = 'Kode akan otomatis terhubung setelah dimasukkan.<br>Klik di luar kotak untuk tutup.';
+
+    container.appendChild(label);
+    container.appendChild(codeDisplay);
+    container.appendChild(hint);
+    document.body.appendChild(container);
+  } catch (e) { toast('Pairing error: ' + e.message, 'error'); }
+}
+
+async function showQr(deviceId) {
+  try {
+    // cek status device dulu
+    const conn = await api('/connections/' + deviceId);
+    const status = conn.data?.currentStatus;
+    if (status?.isLoggedIn) {
+      toast('Device sudah terhubung', 'error');
+      return;
+    }
+
+    // start device dulu kalau offline
+    if (!status?.connectionState || status.connectionState === 'close') {
+      toast('Memulai device...');
+      await api('/connections/start', {
+        method: 'POST',
+        body: JSON.stringify({ deviceId }),
       });
-    </script>
-  </body>
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // ambil QR
+    const d = await api('/connections/qr-code?deviceId=' + deviceId);
+    const qr = d.data?.qrCode;
+    if (!qr) { toast('QR belum tersedia, coba lagi', 'error'); return; }
+
+    const existing = document.getElementById('qrCanvasContainer');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'qrCanvasContainer';
+    container.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:16px';
+    container.onclick = () => container.remove();
+
+    const canvas = document.createElement('canvas');
+    let pollTimer;
+    let currentQr = qr;
+
+    function renderQr(text) {
+      canvas.innerHTML = '';
+      QRCode.toCanvas(canvas, text, { width: 280 }, (err) => {
+        if (err) { toast('QR generation failed', 'error'); return; }
+        canvas.style.maxWidth = '90vw';
+        canvas.style.maxHeight = '90vh';
+        canvas.style.borderRadius = '12px';
+      });
+    }
+
+    renderQr(qr);
+
+    // polling QR rolling tiap 10 detik
+    pollTimer = setInterval(async () => {
+      try {
+        const d = await api('/connections/qr-code?deviceId=' + deviceId);
+        const newQr = d.data?.qrCode;
+        if (newQr && newQr !== currentQr) {
+          currentQr = newQr;
+          renderQr(newQr);
+        }
+      } catch {}
+    }, 10000);
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'color:var(--text-secondary);font-size:13px;text-align:center';
+    hint.textContent = 'Scan QR ini dari WhatsApp > Linked Devices';
+
+    container.onclick = () => {
+      clearInterval(pollTimer);
+      container.remove();
+    };
+
+    container.appendChild(canvas);
+    container.appendChild(hint);
+    document.body.appendChild(container);
+  } catch (e) { toast('QR error: ' + e.message, 'error'); }
+}
+
+async function reloadDevice(deviceId) {
+  try {
+    await api('/connections/stop', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId }),
+    });
+    await api('/connections/start', {
+      method: 'POST',
+      body: JSON.stringify({
+        deviceId,
+        webhookUrl: API + '/callback/whatsapp/' + deviceId,
+      }),
+    });
+    toast('Device reloaded');
+    loadDevices();
+    setTimeout(loadDevices, 3000);
+  } catch (e) { toast('Reload failed: ' + e.message, 'error'); }
+}
+
+// ── Message Actions ──
+function setReplyFrom(event) {
+  event.stopPropagation();
+  const data = JSON.parse(event.currentTarget.getAttribute('data-msg'));
+  const parent = event.currentTarget.closest('.msg');
+  replyTarget = data.jid + '-' + data.id;
+  $('replyPreview').style.display = 'flex';
+  const text = parent?.querySelector('.msg-text')?.textContent || '(media)';
+  $('replyName').textContent = data.fromMe ? 'You' : 'Them';
+  $('replyText').textContent = text.substring(0, 60);
+  $('msgInput').focus();
+}
+
+async function deleteMsg(event) {
+  event.stopPropagation();
+  const key = event.currentTarget.getAttribute('data-key');
+  if (!key || !confirm('Hapus pesan ini untuk semua orang?')) return;
+  try {
+    const idx = key.lastIndexOf('-');
+    const jid = key.slice(0, idx);
+    const id = key.slice(idx + 1);
+    await api('/messages/delete/' + currentDevice, {
+      method: 'POST',
+      body: JSON.stringify({ jid, messageId: id }),
+    });
+    toast('Pesan dihapus');
+    fetchMessages();
+  } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+}
+
+async function forwardMsg(event) {
+  event.stopPropagation();
+  const key = event.currentTarget.getAttribute('data-key');
+  const target = prompt('Masukkan JID tujuan (contoh: 62812xxx@s.whatsapp.net):');
+  if (!target || !key) return;
+  try {
+    await api('/messages/forward/' + currentDevice, {
+      method: 'POST',
+      body: JSON.stringify({ targetJid: target, messageKey: key }),
+    });
+    toast('Pesan diteruskan');
+  } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+}
+
+async function deleteDevice(deviceId) {
+  if (!confirm('Delete device ' + deviceId.substring(0, 8) + '...? This will logout and remove all session data.')) return;
+  try {
+    await api('/connections/logout', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId }),
+    });
+    toast('Device deleted');
+    loadDevices();
+  } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 86400000 && d.getDate() === now.getDate()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (diff < 172800000) return 'Yesterday';
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
+function fmtFullDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Today';
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+function getPushName(msg) {
+  if (!msg) return null;
+  return msg.pushName || null;
+}
+function formatJid(jid) {
+  if (!jid) return 'Unknown';
+  const name = jid.split('@')[0];
+  if (name.startsWith('62')) return '0' + name.slice(2);
+  if (name.startsWith('12036')) return name.slice(0, 6) + '...' + name.slice(-4);
+  return name;
+}
+function bestName(chat) {
+  if (chat?.name) return chat.name;
+  const pushName = getPushName(chat?.lastMessage);
+  if (pushName) return pushName;
+  return formatJid(chat?.jid);
+}
+function getChatName(jid, contact) {
+  if (contact?.name) return contact.name;
+  const name = jid.split('@')[0];
+  return name.startsWith('62') ? '0' + name.slice(2) : name;
+}
+function getMsgContent(msg) {
+  if (!msg?.message) return { text: '[Media message]', type: 'text' };
+  const m = msg.message;
+  if (m.conversation) return { text: m.conversation, type: 'text' };
+  if (m.extendedTextMessage?.text) return { text: m.extendedTextMessage.text, type: 'text' };
+  if (m.imageMessage) return { text: m.imageMessage.caption || '📷 Image', type: 'image', obj: m.imageMessage };
+  if (m.videoMessage) return { text: m.videoMessage.caption || '🎬 Video', type: 'video', obj: m.videoMessage };
+  if (m.audioMessage) return { text: '🎵 Audio', type: 'audio', obj: m.audioMessage };
+  if (m.documentMessage) return { text: m.documentMessage.fileName || '📄 Document', type: 'document', obj: m.documentMessage };
+  if (m.stickerMessage) return { text: 'Sticker', type: 'sticker', obj: m.stickerMessage };
+  return { text: '[Media message]', type: 'unknown' };
+}
+function getMsgId(msg) {
+  return msg.key?.id || '';
+}
+function getMsgRemoteJid(msg) {
+  return msg.key?.remoteJid || '';
+}
+
+// ── API ──
+async function api(url, opts = {}) {
+  const headers = { 'Accept': 'application/json' };
+  if (!(opts.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const res = await fetch(API + url, { ...opts, headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const ct = res.headers.get('content-type') || '';
+  return ct.includes('json') ? res.json() : res;
+}
+
+// ── Load Devices ──
+async function loadDevices() {
+  try {
+    const d = await api('/connections');
+    devices = d.data || [];
+    renderDeviceList();
+  } catch (e) { toast('Failed to load devices: ' + e.message, 'error'); }
+}
+
+function renderDeviceList() {
+  const cards = $('chatList');
+  cards.innerHTML = devices.map(dev => {
+    const status = dev.currentStatus?.isLoggedIn ? 'ONLINE' : dev.status;
+    const statusDot = status === 'open' || status === 'ONLINE' ? '🟢' : status === 'connecting' ? '🟡' : '🔴';
+    const isOnline = status === 'open' || status === 'ONLINE';
+    const isConnecting = status === 'connecting';
+    return `<div class="chat-item" onclick="selectDevice('${dev.id}')">
+      <div class="chat-avatar" style="background:#8696a0">${esc(dev.name?.[0] || '?')}</div>
+      <div class="chat-info">
+        <div class="chat-name">${esc(dev.name || dev.id)}</div>
+        <div class="chat-preview">${statusDot} ${status}</div>
+      </div>
+      <div class="device-actions" onclick="event.stopPropagation()">
+        ${!isOnline && !isConnecting ? `<button onclick="quickStart('${dev.id}')" title="Start"><i class="bi bi-play-fill"></i></button>` : ''}
+        ${isOnline || isConnecting ? `<button onclick="quickStop('${dev.id}')" title="Stop"><i class="bi bi-stop-fill"></i></button>` : ''}
+        ${isOnline || isConnecting ? `<button onclick="showQr('${dev.id}')" title="QR"><i class="bi bi-qr-code"></i></button>` : ''}
+        <button onclick="reloadDevice('${dev.id}')" title="Reload"><i class="bi bi-arrow-clockwise"></i></button>
+        <button onclick="deleteDevice('${dev.id}')" title="Delete" class="danger"><i class="bi bi-trash3"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  if (!devices.length) cards.innerHTML = '<div class="empty-state"><p>No devices. Add one to start.</p></div>';
+}
+
+// ── Select Device & Load Chats ──
+async function selectDevice(id) {
+  currentDevice = id;
+  currentJid = null;
+  $('chatView').style.display = 'none';
+  $('emptyState').style.display = 'flex';
+  disconnectLiveSse();
+  loadChats();
+}
+
+async function loadChats() {
+  if (!currentDevice) return;
+  try {
+    const d = await api('/contacts/' + currentDevice);
+    chats = d.data || [];
+    renderChats();
+    subscribeLiveSse();
+  } catch (e) { toast('Failed to load chats: ' + e.message, 'error'); }
+}
+
+function renderChats() {
+  const el = $('chatList');
+  const dev = devices.find(d => d.id === currentDevice);
+  let html = `<div class="chat-item" onclick="showDevices()">
+    <div class="chat-avatar" style="background:#8696a0"><i class="bi bi-arrow-left"></i></div>
+    <div class="chat-info">
+      <div class="chat-name">${esc(dev?.name || currentDevice)}</div>
+      <div class="chat-preview">🟢 Back to devices</div>
+    </div>
+  </div>`;
+  html += chats.map(c => {
+    const uc = c.unreadCount || 0;
+    const name = bestName(c);
+    return `<div class="chat-item${c.jid === currentJid ? ' active' : ''}" data-jid="${esc(c.jid)}" data-name="${esc(name.toLowerCase())}" onclick="selectChat('${c.jid}')">
+      <div class="chat-avatar">${esc(name[0] || '?')}${uc > 0 ? `<span class="chat-unread">${uc > 99 ? '99+' : uc}</span>` : ''}</div>
+      <div class="chat-info">
+        <div class="chat-meta">
+          <div class="chat-name">${esc(name)}</div>
+          <div class="chat-time">${fmtDate(c.lastTimestamp)}</div>
+        </div>
+        <div class="chat-preview">${esc(getMsgContent(c.lastMessage).text.substring(0, 40))}</div>
+      </div>
+    </div>`;
+  }).join('');
+  if (!chats.length && !devices.length) html += '<div class="empty-state"><p>No chats yet</p></div>';
+  el.innerHTML = html;
+  document.querySelectorAll('.chat-item').forEach(el => {
+    const jid = el.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if (jid === currentJid) el.classList.add('active');
+  });
+}
+
+// ── Select Chat ──
+async function selectChat(jid) {
+  currentJid = jid;
+  msgOffset = 0;
+  allMessages = [];
+  $('chatView').style.display = 'flex';
+  $('emptyState').style.display = 'none';
+  cancelReply();
+
+  const chat = chats.find(c => c.jid === jid);
+  const isGroup = jid.endsWith('@g.us');
+  $('chatAvatar').textContent = (chat?.name || (isGroup ? '#' : '?'))[0];
+  $('chatName').textContent = chat?.name || (isGroup ? 'Group' : jid.split('@')[0]);
+  $('chatStatus').textContent = 'online';
+
+  // mark as read
+  try { await api('/messages/read/' + currentDevice + '/' + encodeURIComponent(jid), { method: 'POST' }); } catch {}
+
+  renderChats();
+  await fetchMessages();
+}
+
+let loadingMessages = false;
+
+async function fetchMessages(loadMore = false) {
+  if (!currentDevice || !currentJid || loadingMessages) return;
+  loadingMessages = true;
+  try {
+    const limit = 50;
+    const d = await api('/messages/' + currentDevice + '/' + encodeURIComponent(currentJid) + '?limit=' + limit + '&offset=' + (loadMore ? msgOffset : 0));
+    const msgs = d.data || [];
+    if (loadMore) {
+      allMessages = [...msgs, ...allMessages];
+      msgOffset += msgs.length;
+      renderMessages(allMessages, true);
+    } else {
+      allMessages = msgs;
+      msgOffset = msgs.length;
+      renderMessages(msgs, false);
+    }
+  } catch (e) { console.error('fetchMessages error:', e); }
+  loadingMessages = false;
+}
+
+function getMsgContentFromObj(m) {
+  const r = getMsgContent(m);
+  if (m.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+    r.quoted = m.message.extendedTextMessage.contextInfo;
+  }
+  return r;
+}
+
+function renderMessages(msgs, keepScroll = false) {
+  const el = $('messagesArea');
+  const prevHeight = keepScroll ? el.scrollHeight : 0;
+  if (!msgs.length) {
+    el.innerHTML = '<div class="empty-state"><p>No messages</p></div>';
+    return;
+  }
+  const sorted = [...msgs].sort((a, b) => (a.messageTimestamp || 0) - (b.messageTimestamp || 0));
+  let html = '', lastDate = '';
+  if (msgOffset >= 50) {
+    html += `<div class="load-more" onclick="fetchMessages(true)"><i class="bi bi-arrow-up"></i> Muat pesan sebelumnya</div>`;
+  }
+  for (const m of sorted) {
+    const isMe = m.key?.fromMe;
+    const content = getMsgContentFromObj(m);
+    const time = fmtDate(m.messageTimestamp);
+    const dateStr = fmtFullDate(m.messageTimestamp);
+    if (dateStr !== lastDate) {
+      html += `<div class="date-separator"><span>${dateStr}</span></div>`;
+      lastDate = dateStr;
+    }
+    html += `<div class="msg ${isMe ? 'outgoing' : 'incoming'}">`;
+    html += '<div class="msg-bubble">';
+    // forwarded label
+    const isFwd = m.message?.extendedTextMessage?.contextInfo?.isForwarded
+      || m.message?.extendedTextMessage?.contextInfo?.forwardingScore > 0
+      || m.message?.imageMessage?.contextInfo?.isForwarded
+      || m.message?.videoMessage?.contextInfo?.isForwarded
+      || m.message?.documentMessage?.contextInfo?.isForwarded;
+    // quoted reply
+    if (content.quoted) {
+      const q = content.quoted;
+      const qc = getMsgContent({ message: q.quotedMessage });
+      const qType = qc.type;
+      const qIcon = qType === 'image' ? '📷' : qType === 'video' ? '🎬' : qType === 'audio' ? '🎵' : qType === 'document' ? '📄' : qType === 'sticker' ? '🎨' : '';
+      html += `<div class="msg-reply"><div class="msg-reply-name">${isMe ? 'You' : 'Them'}</div>`;
+      html += esc(qIcon + ' ' + qc.text.substring(0, 80)) + '</div>';
+    }
+    if (isFwd) {
+      html += '<div class="msg-forwarded"><i class="bi bi-forward"></i> Forwarded</div>';
+    }
+    // media content
+    if (content.type === 'image') {
+      const key = getMsgRemoteJid(m) + '-' + getMsgId(m);
+      html += `<img class="msg-image" src="/messages/media/${currentDevice}/${encodeURIComponent(key)}" alt="image" onerror="mediaError(this)" onclick="showImage(this.src)">`;
+      if (content.text && !content.text.startsWith('📷')) html += `<div class="msg-text">${esc(content.text)}</div>`;
+    } else if (content.type === 'video') {
+      const key = getMsgRemoteJid(m) + '-' + getMsgId(m);
+      html += `<video class="msg-video" src="/messages/media/${currentDevice}/${encodeURIComponent(key)}" controls onerror="mediaError(this)"></video>`;
+      if (content.text && !content.text.startsWith('🎬')) html += `<div class="msg-text">${esc(content.text)}</div>`;
+    } else if (content.type === 'audio') {
+      const key = getMsgRemoteJid(m) + '-' + getMsgId(m);
+      html += `<audio class="msg-audio" src="/messages/media/${currentDevice}/${encodeURIComponent(key)}" controls onerror="mediaError(this)"></audio>`;
+    } else if (content.type === 'document') {
+      const key = getMsgRemoteJid(m) + '-' + getMsgId(m);
+      html += `<div class="msg-document" onclick="window.open('/messages/media/${currentDevice}/${encodeURIComponent(key)}')">
+        <i class="bi bi-file-earmark"></i>
+        <div class="msg-doc-info">
+          <div class="msg-doc-name">${esc(content.obj?.fileName || 'Document')}</div>
+          <div class="msg-doc-size">${content.obj?.fileSize ? Math.round(content.obj.fileSize / 1024) + ' KB' : ''}</div>
+        </div>
+      </div>`;
+    } else if (content.type === 'sticker') {
+      const key = getMsgRemoteJid(m) + '-' + getMsgId(m);
+      html += `<img class="msg-sticker" src="/messages/media/${currentDevice}/${encodeURIComponent(key)}" alt="sticker" onerror="this.style.display='none'">`;
+    } else {
+      html += `<div class="msg-text">${esc(content.text)}</div>`;
+    }
+    // footer
+    html += '<div class="msg-footer">';
+    html += `<span>${time}</span>`;
+    if (isMe) {
+      const status = m.status; // 1=sent, 2=delivered, 3=read
+      html += `<span class="msg-check ${status >= 2 ? '' : 'delivered'}"><i class="bi bi-check${status >= 2 ? '-all' : ''}"></i></span>`;
+    }
+    // message actions
+    const msgKey = getMsgRemoteJid(m) + '-' + getMsgId(m);
+    const msgData = esc(JSON.stringify({ id: m.key?.id, jid: m.key?.remoteJid, fromMe: isMe }));
+    html += `<div class="msg-actions">
+      <button data-msg='${msgData}' onclick="setReplyFrom(event)" title="Balas"><i class="bi bi-reply"></i></button>
+      ${isMe ? `<button data-key='${msgKey}' onclick="deleteMsg(event)" title="Hapus"><i class="bi bi-trash3"></i></button>` : ''}
+      <button data-key='${msgKey}' onclick="forwardMsg(event)" title="Teruskan"><i class="bi bi-forward"></i></button>
+    </div>`;
+    html += '</div></div></div>';
+  }
+  el.innerHTML = html;
+  if (keepScroll) {
+    el.scrollTop = el.scrollHeight - prevHeight;
+  } else {
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+// ── Send Message ──
+function sendMsg() {
+  const input = $('msgInput');
+  const text = input.value.trim();
+  if (!text || !currentDevice || !currentJid) return;
+
+  if (replyTarget) {
+    api('/messages/send-reply', {
+      method: 'POST',
+      body: JSON.stringify({
+        deviceId: currentDevice,
+        recipient: currentJid,
+        message: text,
+        replyMessageKey: replyTarget
+      })
+    }).then(() => {
+      input.value = '';
+      cancelReply();
+      fetchMessages();
+      loadChats();
+    }).catch(e => toast('Reply failed: ' + e.message, 'error'));
+  } else {
+    api('/messages/send-text-message', {
+      method: 'POST',
+      body: JSON.stringify({
+        deviceId: currentDevice,
+        recipient: currentJid,
+        message: text,
+        sendPresence: true
+      })
+    }).then(() => {
+      input.value = '';
+      fetchMessages();
+      loadChats();
+    }).catch(e => toast('Send failed: ' + e.message, 'error'));
+  }
+}
+
+// ── Reply ──
+function setReply(msg) {
+  const content = getMsgContent(msg);
+  replyTarget = { id: msg.key.id, remoteJid: msg.key.remoteJid, fromMe: msg.key.fromMe };
+  $('replyPreview').style.display = 'flex';
+  $('replyName').textContent = msg.key.fromMe ? 'You' : 'Them';
+  $('replyText').textContent = content.text.substring(0, 60);
+  $('msgInput').focus();
+}
+
+function cancelReply() {
+  replyTarget = null;
+  $('replyPreview').style.display = 'none';
+}
+
+// ── Send Media ──
+function pickFile(accept) {
+  $('attachMenu').style.display = 'none';
+  const input = $('fileInput');
+  input.accept = accept;
+  input.click();
+}
+
+async function sendMedia(event) {
+  const file = event.target.files[0];
+  if (!file || !currentDevice || !currentJid) return;
+
+  const fd = new FormData();
+  fd.append('deviceId', currentDevice);
+  fd.append('recipient', currentJid);
+  fd.append('file', file);
+  if (replyTarget) fd.append('replyId', replyTarget.id);
+
+  try {
+    await api('/messages/send-media', { method: 'POST', body: fd });
+    cancelReply();
+    toast('Media sent');
+    fetchMessages();
+    loadChats();
+  } catch (e) { toast('Send media failed: ' + e.message, 'error'); }
+  event.target.value = '';
+}
+
+function toggleAttachMenu() {
+  const el = $('attachMenu');
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
+
+// ── SSE Live ──
+let typingTimers = {};
+
+function subscribeLiveSse() {
+  disconnectLiveSse();
+  if (!currentDevice) return;
+
+  liveSse = new EventSource(API + '/sse/' + currentDevice + '/live');
+  liveSse.onmessage = (ev) => {
+    try {
+      const d = JSON.parse(ev.data);
+      if (d.type === 'new_message' || d.type === 'message_update') {
+        loadChats();
+        const jid = d.data?.key?.remoteJid;
+        if (jid === currentJid) fetchMessages();
+        // desktop notification untuk pesan baru dari chat lain
+        if (d.type === 'new_message' && jid && jid !== currentJid && Notification.permission === 'granted' && !d.data?.key?.fromMe) {
+          const chat = chats.find(c => c.jid === jid);
+          const name = chat ? bestName(chat) : formatJid(jid);
+          const content = getMsgContent(d.data).text.substring(0, 80);
+          new Notification(name, { body: content, icon: '/icon.ico' });
+        }
+      } else if (d.type === 'presence') {
+        const { jid, presence } = d.data;
+        if (jid === currentJid) {
+          const statusEl = $('chatStatus');
+          if (presence === 'composing' || presence === 'recording') {
+            const label = presence === 'recording' ? 'merekam...' : 'mengetik...';
+            statusEl.textContent = label;
+            statusEl.style.color = 'var(--accent)';
+            clearTimeout(typingTimers[jid]);
+            typingTimers[jid] = setTimeout(() => {
+              statusEl.textContent = 'online';
+              statusEl.style.color = '';
+            }, 3000);
+          } else if (presence === 'available') {
+            statusEl.textContent = 'online';
+            statusEl.style.color = '';
+          } else if (presence === 'unavailable') {
+            statusEl.textContent = 'offline';
+            statusEl.style.color = '';
+          }
+        }
+      }
+    } catch {}
+  };
+  liveSse.onerror = () => {};
+}
+
+function disconnectLiveSse() {
+  if (liveSse) { liveSse.close(); liveSse = null; }
+}
+
+// ── Device Dashboard Modal ──
+function showDeviceModal() {
+  // Simple device list - navigate back to device view
+  currentDevice = null;
+  currentJid = null;
+  $('chatView').style.display = 'none';
+  $('emptyState').style.display = 'flex';
+  disconnectLiveSse();
+  loadDevices();
+}
+
+function showDevices() {
+  currentDevice = null;
+  currentJid = null;
+  $('chatView').style.display = 'none';
+  $('emptyState').style.display = 'flex';
+  disconnectLiveSse();
+  loadDevices();
+}
+
+let searchDebounce;
+function filterChats() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    const q = $('searchInput').value.toLowerCase().trim();
+    document.querySelectorAll('.chat-item').forEach(el => {
+      const name = el.getAttribute('data-name') || '';
+      const jid = el.getAttribute('data-jid') || '';
+      el.style.display = (!q || name.includes(q) || jid.includes(q)) ? 'flex' : 'none';
+    });
+  }, 300);
+}
+
+// ── Init ──
+if (Notification && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+loadDevices();
+setInterval(() => { if (currentJid) fetchMessages(); else if (currentDevice) loadChats(); }, 5000);
+</script>
+</body>
 </html>

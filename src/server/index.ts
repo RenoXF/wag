@@ -5,12 +5,14 @@ import { Elysia, t } from 'elysia';
 import { version } from 'package.json';
 import { stringify } from 'qs';
 import icon from '../../assets/icon.ico' with { type: 'file' };
+import apiDocs from './client/api-docs.html' with { type: 'text' };
 import clientCss from './client/client.css' with { type: 'text' };
 import indexClient from './client/index.html' with { type: 'text' };
-import apiDocs from './client/api-docs.html' with { type: 'text' };
 import { connections } from './connections';
+import { contacts } from './contacts';
 import { logs } from './logs';
 import { messages } from './messages';
+import { liveSse } from './sse';
 
 const app = new Elysia()
   .onRequest(({ request }) => {
@@ -40,6 +42,8 @@ const app = new Elysia()
   .use(connections)
   .use(messages)
   .use(logs)
+  .use(contacts)
+  .use(liveSse)
   .post(
     '/test-callback',
     async ({ body: { host }, set }) => {
